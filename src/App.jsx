@@ -1403,7 +1403,7 @@ function App() {
     const sessions400V = filteredData.filter((s) => s.voltage_arch === "400V");
     const sessions800V = filteredData.filter((s) => s.voltage_arch === "800V");
 
-    // console.log("Sessions by voltage architecture:", filteredData);
+    console.log("Sessions by voltage architecture:", sessions400V);
 
     // Stats by machine type
     const sessionsMBS1 = filteredData.filter((s) => s.cpid === "MBS_1");
@@ -1431,9 +1431,9 @@ function App() {
 
       sessions.forEach((s) => {
         // If bucket data exists
-        if (s.bucket && s.bucket.length > 0) {
+        if (s.buckets && s.buckets.length > 0) {
           const kwh =
-            s.bucket.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) / 60;
+            s.buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) / 60;
 
           if (kwh > 0) {
             total += kwh;
@@ -1460,9 +1460,9 @@ function App() {
 
       sessions.forEach((s) => {
         // If bucket exists
-        if (s.bucket && s.bucket.length > 0) {
-          const start = s.bucket[0]?.socPercent;
-          const end = s.bucket[s.bucket.length - 1]?.socPercent;
+        if (s.buckets && s.buckets.length > 0) {
+          const start = s.buckets[0]?.socPercent;
+          const end = s.buckets[s.buckets.length - 1]?.socPercent;
 
           if (start != null && end != null) {
             total += end - start;
@@ -1486,10 +1486,10 @@ function App() {
 
       sessions.forEach((s) => {
         // If bucket exists
-        if (s.bucket && s.bucket.length > 0) {
+        if (s.buckets && s.buckets.length > 0) {
           const avgKw =
-            s.bucket.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) /
-            s.bucket.length;
+            s.buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) /
+            s.buckets.length;
 
           if (avgKw > 0) {
             total += avgKw;
@@ -1516,10 +1516,12 @@ function App() {
       let totalSoc = 0;
       let count = 0;
 
+      console.log("sessions length for avg10MinStats:", sessions.length);
+
       sessions.forEach((s) => {
         // CASE 1: bucket data available
-        if (s.bucket && s.bucket.length > 0) {
-          const first10 = s.bucket.slice(0, 10);
+        if (s.buckets && s.buckets.length > 0) {
+          const first10 = s.buckets.slice(0, 10);
 
           if (first10.length > 0) {
             const sumKw = first10.reduce(
@@ -1529,6 +1531,12 @@ function App() {
 
             const avgKw = sumKw / first10.length;
             const kwh = sumKw / 60;
+
+            console.log(
+              `Session ${s.session_id}: First 10 min avg power = ${avgKw.toFixed(
+                2,
+              )} kW, kWh = ${kwh.toFixed(2)}`,
+            );
 
             const socStart = first10[0]?.socPercent;
             const socEnd = first10[first10.length - 1]?.socPercent;
@@ -1560,6 +1568,17 @@ function App() {
         }
       });
 
+      console.log(
+        "avgKwh:",
+        totalKwh,
+        "avgKw:",
+        totalKw,
+        "avgSoc:",
+        totalSoc,
+        "count:",
+        count,
+      );
+
       return {
         avgKw: count ? totalKw / count : 0,
         avgKwh: count ? totalKwh / count : 0,
@@ -1583,6 +1602,10 @@ function App() {
     const stats10All = avg10MinStats(filteredData);
     const stats10_400V = avg10MinStats(sessions400V);
     const stats10_800V = avg10MinStats(sessions800V);
+    console.log(
+      "Stats for all sessions with 10-min bucket data:",
+      stats10_400V,
+    );
 
     const stats10_MBS1 = avg10MinStats(sessionsMBS1);
     const stats10_MBS2 = avg10MinStats(sessionsMBS2);
