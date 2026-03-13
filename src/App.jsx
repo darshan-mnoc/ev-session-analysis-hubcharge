@@ -430,7 +430,8 @@ const PerformanceBandChart = ({
 
         <Line
           type="monotone"
-          dataKey={showIndividual ? "average" : "median"}
+          // dataKey={showIndividual ? "average" : "median"}
+          dataKey={showIndividual ? "average" : "average"}
           stroke={accentColor}
           strokeWidth={2.5}
           dot={false}
@@ -440,7 +441,8 @@ const PerformanceBandChart = ({
             stroke: "#fff",
             strokeWidth: 1.5,
           }}
-          name={showIndividual ? "Average" : "Median"}
+          // name={showIndividual ? "Average" : "Median"}
+          name={showIndividual ? "Average" : "Average"}
         />
       </ComposedChart>
     </ResponsiveContainer>
