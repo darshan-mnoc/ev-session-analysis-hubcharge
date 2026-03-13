@@ -18,10 +18,11 @@ import Logo from "./assets/hubcharge-logo.png";
 // ============ CONFIGURATION ============
 const API_CONFIG = {
   BASE_URL: "https://hubcharge.micronocinc.com/management/api",
-  // Add your credentials here
-  USERNAME: "", // <-- Enter username
-  PASSWORD: "", // <-- Enter password
 };
+
+// HubCharge login URL for 401 redirects
+const HUBCHARGE_LOGIN_URL =
+  "https://hubcharge.micronocinc.com/login.html?next=https%3A%2F%2Fev-session-dashboard.vercel.app%2F";
 
 // Machine categorization rules
 const getMachineInfo = (cpid, connectorId) => {
@@ -406,60 +407,6 @@ const ProgressBar = ({ progress, status }) => (
   </div>
 );
 
-// Login Component
-const LoginForm = ({ onLogin, loading }) => {
-  const [username, setUsername] = useState(API_CONFIG.USERNAME);
-  const [password, setPassword] = useState(API_CONFIG.PASSWORD);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onLogin(username, password);
-  };
-
-  return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div>
-            <img
-              src={Logo}
-              alt="icon"
-              style={{ width: 200, height: 100, objectFit: "contain" }}
-            />
-          </div>
-          <h1>EV Session Analytics</h1>
-          <p>Sign in to access the dashboard</p>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label>Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
-              required
-            />
-          </div>
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              required
-            />
-          </div>
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? "Connecting..." : "Sign In"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 // Stat Card Component
 const StatCard = ({ icon, value, label, color }) => (
   <div className="stat-card" style={{ "--accent-color": color }}>
@@ -746,9 +693,18 @@ function App() {
   const {
     isAuthenticated,
     isLoading: authLoading,
-    credentials,
+    handleUnauthorized,
+    authError,
+    getAuthHeader,
     login,
+    loginWithGoogle,
+    logout,
+    user,
   } = useAuth();
+  const hasFetchedRef = useRef(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -803,434 +759,429 @@ function App() {
   const [lockedChartInfo, setLockedChartInfo] = useState(null); // click-locked
 
   // Fetch and process data
-  const fetchData = useCallback(
-    async (username, password) => {
-      setLoading(true);
-      setError(null);
-      setProgress(0);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setProgress(0);
 
-      const authHeader = "Basic " + btoa(`${username}:${password}`);
+    try {
+      // Step 1: Fetch mini_view data
+      setProgressStatus("Fetching session data...");
+      setProgress(10);
 
-      try {
-        // Step 1: Fetch mini_view data
-        setProgressStatus("Fetching session data...");
-        setProgress(10);
+      const miniViewRes = await fetch(
+        `${API_CONFIG.BASE_URL}/views/mini_view?limit=999999&range=year`,
+        {
+          credentials: "include",
+          headers: { ...getAuthHeader() },
+        },
+      );
 
-        const miniViewRes = await fetch(
-          `${API_CONFIG.BASE_URL}/views/mini_view?limit=999999&range=year`,
-          {
-            headers: { Authorization: authHeader },
-          },
-        );
+      // Handle 401 - session expired
+      if (miniViewRes.status === 401) {
+        setLoading(false);
+        handleUnauthorized();
+        return;
+      }
 
-        if (!miniViewRes.ok) {
-          throw new Error(
-            "Authentication failed. Please check your credentials.",
-          );
-        }
+      if (!miniViewRes.ok) {
+        throw new Error("Failed to fetch session data. Please try again.");
+      }
 
-        const miniViewData = await miniViewRes.json();
-        // console.log("Raw mini_view data:", miniViewData);
-        setProgress(30);
+      const miniViewData = await miniViewRes.json();
+      // console.log("Raw mini_view data:", miniViewData);
+      setProgress(30);
 
-        // Step 2: Fetch EMS transactions
-        setProgressStatus("Fetching EMS transactions...");
+      // Step 2: Fetch EMS transactions
+      setProgressStatus("Fetching EMS transactions...");
 
-        const emsRes = await fetch(
-          `${API_CONFIG.BASE_URL}/ems_transactions?limit=999999`,
-          {
-            headers: { Authorization: authHeader },
-          },
-        );
+      const emsRes = await fetch(
+        `${API_CONFIG.BASE_URL}/ems_transactions?limit=999999`,
+        {
+          credentials: "include",
+          headers: { ...getAuthHeader() },
+        },
+      );
 
-        if (!emsRes.ok) {
-          throw new Error("Failed to fetch EMS data.");
-        }
+      // Handle 401 - session expired
+      if (emsRes.status === 401) {
+        setLoading(false);
+        handleUnauthorized();
+        return;
+      }
 
-        const emsData = await emsRes.json();
-        console.log("Raw EMS data:", emsData);
-        setProgress(50);
+      if (!emsRes.ok) {
+        throw new Error("Failed to fetch EMS data.");
+      }
 
-        // Log EMS data structure to see minuteBuckets
-        const emsArray = emsData.rows || emsData || [];
-        console.log("EMS transactions loaded:", emsArray.length);
-        if (emsArray.length > 0) {
-          const keys = Object.keys(emsArray[0]);
-          console.log("Sample EMS record keys:", keys.join(", "));
-          console.log(
-            "Sample EMS record (stringified):",
-            JSON.stringify(emsArray[0], null, 2),
-          );
-        }
+      const emsData = await emsRes.json();
+      console.log("Raw EMS data:", emsData);
+      setProgress(50);
 
-        // Step 3: Filter sessions >= 10 minutes
-        setProgressStatus("Filtering sessions (≥10 minutes)...");
-
-        const filteredSessions = miniViewData.rows.filter(
-          (row) =>
-            parseInt(row.duration_minutes) >= 10 && row.final_cost >= 12.5,
-        );
-
+      // Log EMS data structure to see minuteBuckets
+      const emsArray = emsData.rows || emsData || [];
+      console.log("EMS transactions loaded:", emsArray.length);
+      if (emsArray.length > 0) {
+        const keys = Object.keys(emsArray[0]);
+        console.log("Sample EMS record keys:", keys.join(", "));
         console.log(
-          `Sessions with duration >= 10 min: ${filteredSessions.length}`,
-          filteredSessions,
+          "Sample EMS record (stringified):",
+          JSON.stringify(emsArray[0], null, 2),
         );
+      }
 
-        // Log mini_view session structure
-        if (filteredSessions.length > 0) {
-          console.log(
-            "Sample mini_view session keys:",
-            Object.keys(filteredSessions[0]).join(", "),
-          );
-          console.log(
-            "Sample mini_view raw_transaction_id:",
-            filteredSessions[0].raw_transaction_id,
-          );
-          console.log(
-            "Sample mini_view session_id:",
-            filteredSessions[0].session_id,
-          );
+      // Step 3: Filter sessions >= 10 minutes
+      setProgressStatus("Filtering sessions (≥10 minutes)...");
+
+      const filteredSessions = miniViewData.rows.filter(
+        (row) => parseInt(row.duration_minutes) >= 10 && row.final_cost >= 12.5,
+      );
+
+      console.log(
+        `Sessions with duration >= 10 min: ${filteredSessions.length}`,
+        filteredSessions,
+      );
+
+      // Log mini_view session structure
+      if (filteredSessions.length > 0) {
+        console.log(
+          "Sample mini_view session keys:",
+          Object.keys(filteredSessions[0]).join(", "),
+        );
+        console.log(
+          "Sample mini_view raw_transaction_id:",
+          filteredSessions[0].raw_transaction_id,
+        );
+        console.log(
+          "Sample mini_view session_id:",
+          filteredSessions[0].session_id,
+        );
+      }
+
+      setProgress(60);
+
+      // Step 4: Create EMS lookup map (try multiple keys for matching)
+      setProgressStatus("Matching transactions...");
+
+      // EMS uses "transaction_id", mini_view uses "raw_transaction_id" - same values, different field names
+      const emsMapByTxId = new Map();
+      emsArray.forEach((ems) => {
+        if (ems.transaction_id) {
+          emsMapByTxId.set(ems.transaction_id, ems);
         }
+      });
 
-        setProgress(60);
+      // Log what IDs we have for matching
+      if (emsArray.length > 0) {
+        console.log("Sample EMS transaction_id:", emsArray[0].transaction_id);
+        console.log("EMS map by TxId size:", emsMapByTxId.size);
+      }
 
-        // Step 4: Create EMS lookup map (try multiple keys for matching)
-        setProgressStatus("Matching transactions...");
+      // Count how many EMS records have minute_buckets (snake_case)
+      const emsWithBuckets = emsArray.filter(
+        (e) => e.minute_buckets && e.minute_buckets.length > 0,
+      );
+      console.log("EMS records with minute_buckets:", emsWithBuckets.length);
 
-        // EMS uses "transaction_id", mini_view uses "raw_transaction_id" - same values, different field names
-        const emsMapByTxId = new Map();
-        emsArray.forEach((ems) => {
-          if (ems.transaction_id) {
-            emsMapByTxId.set(ems.transaction_id, ems);
+      setProgress(70);
+
+      // Step 5: Merge data and categorize
+      setProgressStatus("Processing and categorizing data...");
+
+      const mergedSessions = filteredSessions
+        .map((session) => {
+          // Match by raw_transaction_id (mini_view) to transaction_id (EMS)
+          const ems = emsMapByTxId.get(session.raw_transaction_id);
+
+          const machineInfo = getMachineInfo(
+            session.cpid,
+            session.connector_id,
+          );
+
+          // Calculate SOC gain
+          const socStart =
+            session.soc_start || ems?.summary?.startSocPercent || 0;
+          const socEnd = session.soc_end || ems?.summary?.endSocPercent || 0;
+          const socGain = socEnd - socStart;
+
+          // Calculate estimated kWh in 10 min
+          const totalKwh = session.total_kwh || ems?.summary?.totalKwh || 0;
+          const average_kw = session.average_kw || ems?.summary?.averageKw || 0;
+          const durationMin = session.duration_minutes || 0;
+          const estimatedKwh10Min =
+            durationMin > 0 ? (totalKwh / durationMin) * 10 : 0;
+
+          // Get minute_buckets from EMS data (snake_case as per API)
+          const rawBuckets = ems?.minute_buckets || [];
+          // console.log("Raw minute buckets:", session.session_id, rawBuckets);
+
+          let buckets = [];
+
+          if (Array.isArray(rawBuckets) && rawBuckets.length > 0) {
+            buckets = rawBuckets.map((b, i) => ({
+              min: b.index ?? i,
+              label: b.range || `${String(i).padStart(2, "0")}:00`,
+              avgPowerKw: Number(
+                b.avgPowerKw || b.avg_power_kw || b.power || 0,
+              ),
+              socPercent: Number(b.socPercent || b.soc_percent || b.soc || 0),
+              avgCurrentA: Number(
+                b.avgCurrentA || b.avg_current_a || b.current || 0,
+              ),
+              avgVoltageV: Number(
+                b.avgVoltageV || b.avg_voltage_v || b.voltage || 0,
+              ),
+              durationSec: Number(b.durationSec || b.duration_sec || 60),
+            }));
           }
+
+          // Calculate voltage architecture (400V or 800V) based on average voltage
+          let avgVoltage = 0;
+          let avgCurrent = 0;
+          if (buckets.length > 0) {
+            const voltageSum = buckets.reduce(
+              (sum, b) => sum + (b.avgVoltageV || 0),
+              0,
+            );
+            const currentSum = buckets.reduce(
+              (sum, b) => sum + (b.avgCurrentA || 0),
+              0,
+            );
+            avgVoltage = voltageSum / buckets.length;
+            avgCurrent = currentSum / buckets.length;
+          }
+
+          // If average voltage > 600V, it's an 800V architecture, otherwise 400V
+          const voltageArch =
+            !buckets.length > 0
+              ? session.cpid === "MBS_1" && session.average_kw > 100
+                ? "800V"
+                : "400V"
+              : avgVoltage > 600
+                ? "800V"
+                : "400V";
+
+          // Calculate kWh for first 10 minutes from minute_buckets
+          // Each bucket is 1 minute, kWh = avgPowerKw * (1/60) per minute
+          let kwh10Min = 0;
+
+          if (parseInt(durationMin) === 10) {
+            // For sessions exactly 10 minutes: use total energy as 10-min energy
+            kwh10Min = totalKwh;
+          } else if (parseInt(durationMin) > 10) {
+            // For sessions > 10 minutes: sum first 10 buckets + half of 11th minute
+            const first10Buckets = buckets.slice(0, 10);
+            kwh10Min = first10Buckets.reduce((sum, b) => {
+              // Power in kW * time in hours (1 min = 1/60 hour)
+              return sum + (b.avgPowerKw || 0) * (1 / 60);
+            }, 0);
+
+            // Add half of the 11th minute's energy (if available)
+            // 11th minute is at index 10
+            if (buckets.length > 10) {
+              const eleventhMinutePower = buckets[10]?.avgPowerKw || 0;
+              // Half minute energy = (power / 2) * (1/60) = power / 120
+              const halfMinuteKwh = eleventhMinutePower / 2 / 60;
+              // kwh10Min += halfMinuteKwh;
+            }
+          } else {
+            // For sessions < 10 minutes: calculate from available buckets
+            const availableBuckets = buckets.slice(
+              0,
+              Math.min(10, buckets.length),
+            );
+            kwh10Min = availableBuckets.reduce((sum, b) => {
+              return sum + (b.avgPowerKw || 0) * (1 / 60);
+            }, 0);
+          }
+
+          // Calculate kW for first 10 minutes from minute_buckets
+          // Each bucket is 1 minute, kW = sum(avgPowerKw)/10 per minute
+          let kw10Min = 0;
+
+          if (parseInt(durationMin) === 10) {
+            // For sessions exactly 10 minutes: use total energy as 10-min energy
+            kw10Min = average_kw;
+          } else if (parseInt(durationMin) > 10) {
+            // For sessions > 10 minutes: sum first 10 buckets + half of 11th minute
+            const first10Buckets = buckets.slice(0, 10);
+            kw10Min =
+              first10Buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) /
+              first10Buckets.length;
+
+            // Add half of the 11th minute's energy (if available)
+            // 11th minute is at index 10
+            if (buckets.length > 10) {
+              const eleventhMinutePower = buckets[10]?.avgPowerKw || 0;
+              const halfMinuteKw = eleventhMinutePower / 2;
+              // kw10Min += halfMinuteKw;
+            }
+          } else {
+            // For sessions < 10 minutes: calculate from available buckets
+            const availableBuckets = buckets.slice(
+              0,
+              Math.min(10, buckets.length),
+            );
+            kw10Min =
+              availableBuckets.reduce(
+                (sum, b) => sum + (b.avgPowerKw || 0),
+                0,
+              ) / availableBuckets.length;
+          }
+
+          // Calculate SOC change in first 10 minutes
+          const first10BucketsForSoc = buckets.slice(0, 10);
+          let soc10MinStart = socStart;
+          let soc10MinEnd = socStart;
+
+          if (parseInt(durationMin) === 10) {
+            // For sessions exactly 10 minutes: use total energy as 10-min energy
+            soc10MinStart = socStart;
+            soc10MinEnd = socEnd;
+          }
+
+          if (first10BucketsForSoc.length > 0) {
+            // Get SOC at start (first bucket) and end (last of first 10)
+            soc10MinStart = first10BucketsForSoc[0]?.socPercent || socStart;
+            soc10MinEnd =
+              first10BucketsForSoc[first10BucketsForSoc.length - 1]
+                ?.socPercent || soc10MinStart;
+          }
+
+          const soc10MinGain = soc10MinEnd - soc10MinStart;
+
+          // Log first session to debug
+          if (filteredSessions.indexOf(session) === 0) {
+            console.log("=== DEBUG: First Session ===");
+            console.log("Session ID:", session.session_id);
+            console.log("raw_transaction_id:", session.raw_transaction_id);
+            console.log("EMS match found:", !!ems);
+            console.log(
+              "EMS minute_buckets:",
+              ems?.minute_buckets?.length || 0,
+            );
+            console.log("Processed buckets:", buckets.length);
+            console.log(
+              "Avg Voltage:",
+              avgVoltage.toFixed(1),
+              "-> Architecture:",
+              voltageArch,
+            );
+            console.log("First 10 min kWh:", kwh10Min.toFixed(2));
+            console.log("First 10 min SOC gain:", soc10MinGain);
+          }
+
+          // Calculate extensions (base is 10 minutes, each extension is 5 minutes)
+          const baseDuration = durationMin;
+          const extensionMinutes = Number(session.extension_minutes) || 0;
+          const extensionCount = Number(session.extensions_count) || 0;
+
+          // console.log(
+          //   `Session ${session.session_id}: duration ${durationMin} min, extensions ${extensionMinutes} min (${extensionCount} count)`,
+          // );
+
+          return {
+            session_id: session.session_id?.slice(0, 8) || "N/A",
+            full_id: session.session_id || "N/A",
+            raw_transaction_id: session.raw_transaction_id,
+            ...machineInfo,
+            cpid: session.cpid || "unknown",
+            connector_id: session.connector_id || 0,
+            duration_minutes: durationMin,
+            base_duration: baseDuration,
+            extension_minutes: extensionMinutes,
+            extension_count: extensionCount,
+            soc_start: socStart,
+            soc_end: socEnd,
+            soc_gain: socGain,
+            total_kwh: totalKwh,
+            average_kw: average_kw,
+            estimated_kwh_10_min: estimatedKwh10Min,
+            final_cost: session.final_cost || 0,
+            status: session.status || "unknown",
+            ems_site:
+              ems?.ems_site ||
+              session.ems_site ||
+              "hc-mbs (Without EMS Bucket Data)",
+            start_time: session.start_time || ems?.ems_start_time_utc || "",
+            end_time: session.end_time || ems?.ems_end_time_utc || "",
+            participant_label: session.participant_label || "N/A",
+            user_full_name: session.user_full_name || "N/A",
+            ev_capacity_kwh: session.ev_capacity_kwh || 0,
+            buckets: buckets,
+            // New fields
+            voltage_arch: voltageArch,
+            avg_voltage: avgVoltage,
+            avg_current: avgCurrent,
+            kwh_10_min: kwh10Min,
+            kw_10_min: kw10Min,
+            soc_10_min_start: soc10MinStart,
+            soc_10_min_end: soc10MinEnd,
+            soc_10_min_gain: soc10MinGain,
+            // refunded
+            is_refunded: session.is_refunded,
+            // session note
+            session_note: session.session_note || "",
+          };
+        })
+        // Remove rows with NaN SOC gain or 0 estimated_kwh_10_min
+        .filter((session) => {
+          const validSocGain =
+            !isNaN(session.soc_gain) && session.soc_gain !== null;
+          const validKwh = session.estimated_kwh_10_min > 0;
+          return validSocGain;
         });
 
-        // Log what IDs we have for matching
-        if (emsArray.length > 0) {
-          console.log("Sample EMS transaction_id:", emsArray[0].transaction_id);
-          console.log("EMS map by TxId size:", emsMapByTxId.size);
-        }
+      setProgress(90);
 
-        // Count how many EMS records have minute_buckets (snake_case)
-        const emsWithBuckets = emsArray.filter(
-          (e) => e.minute_buckets && e.minute_buckets.length > 0,
-        );
-        console.log("EMS records with minute_buckets:", emsWithBuckets.length);
+      // Log how many sessions have chart data
+      const sessionsWithBuckets = mergedSessions.filter(
+        (s) => s.buckets && s.buckets.length > 0,
+      );
 
-        setProgress(70);
-
-        // Step 5: Merge data and categorize
-        setProgressStatus("Processing and categorizing data...");
-
-        const mergedSessions = filteredSessions
-          .map((session) => {
-            // Match by raw_transaction_id (mini_view) to transaction_id (EMS)
-            const ems = emsMapByTxId.get(session.raw_transaction_id);
-
-            const machineInfo = getMachineInfo(
-              session.cpid,
-              session.connector_id,
-            );
-
-            // Calculate SOC gain
-            const socStart =
-              session.soc_start || ems?.summary?.startSocPercent || 0;
-            const socEnd = session.soc_end || ems?.summary?.endSocPercent || 0;
-            const socGain = socEnd - socStart;
-
-            // Calculate estimated kWh in 10 min
-            const totalKwh = session.total_kwh || ems?.summary?.totalKwh || 0;
-            const average_kw =
-              session.average_kw || ems?.summary?.averageKw || 0;
-            const durationMin = session.duration_minutes || 0;
-            const estimatedKwh10Min =
-              durationMin > 0 ? (totalKwh / durationMin) * 10 : 0;
-
-            // Get minute_buckets from EMS data (snake_case as per API)
-            const rawBuckets = ems?.minute_buckets || [];
-            // console.log("Raw minute buckets:", session.session_id, rawBuckets);
-
-            let buckets = [];
-
-            if (Array.isArray(rawBuckets) && rawBuckets.length > 0) {
-              buckets = rawBuckets.map((b, i) => ({
-                min: b.index ?? i,
-                label: b.range || `${String(i).padStart(2, "0")}:00`,
-                avgPowerKw: Number(
-                  b.avgPowerKw || b.avg_power_kw || b.power || 0,
-                ),
-                socPercent: Number(b.socPercent || b.soc_percent || b.soc || 0),
-                avgCurrentA: Number(
-                  b.avgCurrentA || b.avg_current_a || b.current || 0,
-                ),
-                avgVoltageV: Number(
-                  b.avgVoltageV || b.avg_voltage_v || b.voltage || 0,
-                ),
-                durationSec: Number(b.durationSec || b.duration_sec || 60),
-              }));
-            }
-
-            // Calculate voltage architecture (400V or 800V) based on average voltage
-            let avgVoltage = 0;
-            let avgCurrent = 0;
-            if (buckets.length > 0) {
-              const voltageSum = buckets.reduce(
-                (sum, b) => sum + (b.avgVoltageV || 0),
-                0,
-              );
-              const currentSum = buckets.reduce(
-                (sum, b) => sum + (b.avgCurrentA || 0),
-                0,
-              );
-              avgVoltage = voltageSum / buckets.length;
-              avgCurrent = currentSum / buckets.length;
-            }
-
-            // If average voltage > 600V, it's an 800V architecture, otherwise 400V
-            const voltageArch =
-              !buckets.length > 0
-                ? session.cpid === "MBS_1" && session.average_kw > 100
-                  ? "800V"
-                  : "400V"
-                : avgVoltage > 600
-                  ? "800V"
-                  : "400V";
-
-            // Calculate kWh for first 10 minutes from minute_buckets
-            // Each bucket is 1 minute, kWh = avgPowerKw * (1/60) per minute
-            let kwh10Min = 0;
-
-            if (parseInt(durationMin) === 10) {
-              // For sessions exactly 10 minutes: use total energy as 10-min energy
-              kwh10Min = totalKwh;
-            } else if (parseInt(durationMin) > 10) {
-              // For sessions > 10 minutes: sum first 10 buckets + half of 11th minute
-              const first10Buckets = buckets.slice(0, 10);
-              kwh10Min = first10Buckets.reduce((sum, b) => {
-                // Power in kW * time in hours (1 min = 1/60 hour)
-                return sum + (b.avgPowerKw || 0) * (1 / 60);
-              }, 0);
-
-              // Add half of the 11th minute's energy (if available)
-              // 11th minute is at index 10
-              if (buckets.length > 10) {
-                const eleventhMinutePower = buckets[10]?.avgPowerKw || 0;
-                // Half minute energy = (power / 2) * (1/60) = power / 120
-                const halfMinuteKwh = eleventhMinutePower / 2 / 60;
-                // kwh10Min += halfMinuteKwh;
-              }
-            } else {
-              // For sessions < 10 minutes: calculate from available buckets
-              const availableBuckets = buckets.slice(
-                0,
-                Math.min(10, buckets.length),
-              );
-              kwh10Min = availableBuckets.reduce((sum, b) => {
-                return sum + (b.avgPowerKw || 0) * (1 / 60);
-              }, 0);
-            }
-
-            // Calculate kW for first 10 minutes from minute_buckets
-            // Each bucket is 1 minute, kW = sum(avgPowerKw)/10 per minute
-            let kw10Min = 0;
-
-            if (parseInt(durationMin) === 10) {
-              // For sessions exactly 10 minutes: use total energy as 10-min energy
-              kw10Min = average_kw;
-            } else if (parseInt(durationMin) > 10) {
-              // For sessions > 10 minutes: sum first 10 buckets + half of 11th minute
-              const first10Buckets = buckets.slice(0, 10);
-              kw10Min =
-                first10Buckets.reduce(
-                  (sum, b) => sum + (b.avgPowerKw || 0),
-                  0,
-                ) / first10Buckets.length;
-
-              // Add half of the 11th minute's energy (if available)
-              // 11th minute is at index 10
-              if (buckets.length > 10) {
-                const eleventhMinutePower = buckets[10]?.avgPowerKw || 0;
-                const halfMinuteKw = eleventhMinutePower / 2;
-                // kw10Min += halfMinuteKw;
-              }
-            } else {
-              // For sessions < 10 minutes: calculate from available buckets
-              const availableBuckets = buckets.slice(
-                0,
-                Math.min(10, buckets.length),
-              );
-              kw10Min =
-                availableBuckets.reduce(
-                  (sum, b) => sum + (b.avgPowerKw || 0),
-                  0,
-                ) / availableBuckets.length;
-            }
-
-            // Calculate SOC change in first 10 minutes
-            const first10BucketsForSoc = buckets.slice(0, 10);
-            let soc10MinStart = socStart;
-            let soc10MinEnd = socStart;
-
-            if (parseInt(durationMin) === 10) {
-              // For sessions exactly 10 minutes: use total energy as 10-min energy
-              soc10MinStart = socStart;
-              soc10MinEnd = socEnd;
-            }
-
-            if (first10BucketsForSoc.length > 0) {
-              // Get SOC at start (first bucket) and end (last of first 10)
-              soc10MinStart = first10BucketsForSoc[0]?.socPercent || socStart;
-              soc10MinEnd =
-                first10BucketsForSoc[first10BucketsForSoc.length - 1]
-                  ?.socPercent || soc10MinStart;
-            }
-
-            const soc10MinGain = soc10MinEnd - soc10MinStart;
-
-            // Log first session to debug
-            if (filteredSessions.indexOf(session) === 0) {
-              console.log("=== DEBUG: First Session ===");
-              console.log("Session ID:", session.session_id);
-              console.log("raw_transaction_id:", session.raw_transaction_id);
-              console.log("EMS match found:", !!ems);
-              console.log(
-                "EMS minute_buckets:",
-                ems?.minute_buckets?.length || 0,
-              );
-              console.log("Processed buckets:", buckets.length);
-              console.log(
-                "Avg Voltage:",
-                avgVoltage.toFixed(1),
-                "-> Architecture:",
-                voltageArch,
-              );
-              console.log("First 10 min kWh:", kwh10Min.toFixed(2));
-              console.log("First 10 min SOC gain:", soc10MinGain);
-            }
-
-            // Calculate extensions (base is 10 minutes, each extension is 5 minutes)
-            const baseDuration = durationMin;
-            const extensionMinutes = Number(session.extension_minutes) || 0;
-            const extensionCount = Number(session.extensions_count) || 0;
-
-            // console.log(
-            //   `Session ${session.session_id}: duration ${durationMin} min, extensions ${extensionMinutes} min (${extensionCount} count)`,
-            // );
-
-            return {
-              session_id: session.session_id?.slice(0, 8) || "N/A",
-              full_id: session.session_id || "N/A",
-              raw_transaction_id: session.raw_transaction_id,
-              ...machineInfo,
-              cpid: session.cpid || "unknown",
-              connector_id: session.connector_id || 0,
-              duration_minutes: durationMin,
-              base_duration: baseDuration,
-              extension_minutes: extensionMinutes,
-              extension_count: extensionCount,
-              soc_start: socStart,
-              soc_end: socEnd,
-              soc_gain: socGain,
-              total_kwh: totalKwh,
-              average_kw: average_kw,
-              estimated_kwh_10_min: estimatedKwh10Min,
-              final_cost: session.final_cost || 0,
-              status: session.status || "unknown",
-              ems_site:
-                ems?.ems_site ||
-                session.ems_site ||
-                "hc-mbs (Without EMS Bucket Data)",
-              start_time: session.start_time || ems?.ems_start_time_utc || "",
-              end_time: session.end_time || ems?.ems_end_time_utc || "",
-              participant_label: session.participant_label || "N/A",
-              user_full_name: session.user_full_name || "N/A",
-              ev_capacity_kwh: session.ev_capacity_kwh || 0,
-              buckets: buckets,
-              // New fields
-              voltage_arch: voltageArch,
-              avg_voltage: avgVoltage,
-              avg_current: avgCurrent,
-              kwh_10_min: kwh10Min,
-              kw_10_min: kw10Min,
-              soc_10_min_start: soc10MinStart,
-              soc_10_min_end: soc10MinEnd,
-              soc_10_min_gain: soc10MinGain,
-              // refunded
-              is_refunded: session.is_refunded,
-              // session note
-              session_note: session.session_note || "",
-            };
-          })
-          // Remove rows with NaN SOC gain or 0 estimated_kwh_10_min
-          .filter((session) => {
-            const validSocGain =
-              !isNaN(session.soc_gain) && session.soc_gain !== null;
-            const validKwh = session.estimated_kwh_10_min > 0;
-            return validSocGain;
-          });
-
-        setProgress(90);
-
-        // Log how many sessions have chart data
-        const sessionsWithBuckets = mergedSessions.filter(
-          (s) => s.buckets && s.buckets.length > 0,
-        );
-
+      console.log(
+        `Sessions with chart data: ${sessionsWithBuckets.length} / ${mergedSessions.length}`,
+      );
+      if (sessionsWithBuckets.length > 0) {
         console.log(
-          `Sessions with chart data: ${sessionsWithBuckets.length} / ${mergedSessions.length}`,
+          "Sample session with buckets:",
+          sessionsWithBuckets[0].session_id,
+          "has",
+          sessionsWithBuckets[0].buckets.length,
+          "data points",
         );
-        if (sessionsWithBuckets.length > 0) {
-          console.log(
-            "Sample session with buckets:",
-            sessionsWithBuckets[0].session_id,
-            "has",
-            sessionsWithBuckets[0].buckets.length,
-            "data points",
-          );
-        }
-
-        // Step 6: Sort by start time (newest first)
-        setProgressStatus("Finalizing...");
-
-        sessionsWithBuckets.sort(
-          (a, b) => new Date(b.start_time) - new Date(a.start_time),
-        );
-
-        // console.log("Total sessions after processing:", sessionsWithBuckets);
-
-        setProgress(100);
-        setData(sessionsWithBuckets);
-        login(username, password);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    },
-    [login],
-  );
 
-  // Handle login
-  const handleLogin = (username, password) => {
-    fetchData(username, password);
-  };
+      // Step 6: Sort by start time (newest first)
+      setProgressStatus("Finalizing...");
+
+      sessionsWithBuckets.sort(
+        (a, b) => new Date(b.start_time) - new Date(a.start_time),
+      );
+
+      // console.log("Total sessions after processing:", sessionsWithBuckets);
+
+      setProgress(100);
+      setData(sessionsWithBuckets);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [handleUnauthorized, getAuthHeader]);
 
   // Handle refresh
   const handleRefresh = () => {
-    fetchData(credentials.username, credentials.password);
+    fetchData();
   };
 
-  // Auto-fetch data when returning to dashboard if authenticated but no data
+  // Auto-fetch data when authenticated
   useEffect(() => {
-    if (
-      isAuthenticated &&
-      credentials.username &&
-      data.length === 0 &&
-      !loading
-    ) {
-      fetchData(credentials.username, credentials.password);
+    if (isAuthenticated && !authLoading && !hasFetchedRef.current && !loading) {
+      hasFetchedRef.current = true;
+      fetchData();
     }
-  }, [isAuthenticated, credentials, data.length, loading, fetchData]);
+  }, [isAuthenticated, authLoading, loading, fetchData]);
 
   // Filter options
   const filterOptions = useMemo(() => {
@@ -1403,7 +1354,7 @@ function App() {
     const sessions400V = filteredData.filter((s) => s.voltage_arch === "400V");
     const sessions800V = filteredData.filter((s) => s.voltage_arch === "800V");
 
-    console.log("Sessions by voltage architecture:", sessions400V);
+    // console.log("Sessions by voltage architecture:", sessions400V);
 
     // Stats by machine type
     const sessionsMBS1 = filteredData.filter((s) => s.cpid === "MBS_1");
@@ -1532,11 +1483,11 @@ function App() {
             const avgKw = sumKw / first10.length;
             const kwh = sumKw / 60;
 
-            console.log(
-              `Session ${s.session_id}: First 10 min avg power = ${avgKw.toFixed(
-                2,
-              )} kW, kWh = ${kwh.toFixed(2)}`,
-            );
+            // console.log(
+            //   `Session ${s.session_id}: First 10 min avg power = ${avgKw.toFixed(
+            //     2,
+            //   )} kW, kWh = ${kwh.toFixed(2)}`,
+            // );
 
             const socStart = first10[0]?.socPercent;
             const socEnd = first10[first10.length - 1]?.socPercent;
@@ -1568,16 +1519,16 @@ function App() {
         }
       });
 
-      console.log(
-        "avgKwh:",
-        totalKwh,
-        "avgKw:",
-        totalKw,
-        "avgSoc:",
-        totalSoc,
-        "count:",
-        count,
-      );
+      // console.log(
+      //   "avgKwh:",
+      //   totalKwh,
+      //   "avgKw:",
+      //   totalKw,
+      //   "avgSoc:",
+      //   totalSoc,
+      //   "count:",
+      //   count,
+      // );
 
       return {
         avgKw: count ? totalKw / count : 0,
@@ -1602,10 +1553,10 @@ function App() {
     const stats10All = avg10MinStats(filteredData);
     const stats10_400V = avg10MinStats(sessions400V);
     const stats10_800V = avg10MinStats(sessions800V);
-    console.log(
-      "Stats for all sessions with 10-min bucket data:",
-      stats10_400V,
-    );
+    // console.log(
+    //   "Stats for all sessions with 10-min bucket data:",
+    //   stats10_400V,
+    // );
 
     const stats10_MBS1 = avg10MinStats(sessionsMBS1);
     const stats10_MBS2 = avg10MinStats(sessionsMBS2);
@@ -1950,6 +1901,16 @@ function App() {
     document.body.removeChild(link);
   };
 
+  // Auth loading state - waiting for auth check
+  if (authLoading) {
+    return (
+      <div className="auth-loading">
+        <div className="auth-loading-spinner"></div>
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
+
   // Loading screen
   if (loading) {
     return (
@@ -1972,37 +1933,86 @@ function App() {
     );
   }
 
-  // Loading state while checking stored credentials
-  if (authLoading) {
-    return (
-      <div className="auth-loading">
-        <div className="auth-loading-spinner"></div>
-        <p>Checking authentication...</p>
-      </div>
-    );
-  }
+  // Login form handler
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    await login(loginEmail, loginPassword);
+    setLoginLoading(false);
+  };
 
-  // Login screen
+  // Show login form when not authenticated
   if (!isAuthenticated) {
     return (
-      <>
-        <LoginForm onLogin={handleLogin} loading={loading} />
-        {error && (
-          <div className="error-toast">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="15" y1="9" x2="9" y2="15" />
-              <line x1="9" y1="9" x2="15" y2="15" />
-            </svg>
-            <span>{error}</span>
+      <div className="auth-loading">
+        <div className="login-form-container">
+          <img src={Logo} alt="HubCharge" className="login-logo" />
+          <h2>EV Session Dashboard</h2>
+          <p className="login-subtitle">Sign in to access analytics</p>
+
+          {authError && <div className="login-error">{authError}</div>}
+
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="login-field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="login-field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Password"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+            <button type="submit" className="login-btn" disabled={loginLoading}>
+              {loginLoading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          <div className="login-divider">
+            <span>or</span>
           </div>
-        )}
-      </>
+
+          <button
+            type="button"
+            className="login-btn google-btn"
+            onClick={loginWithGoogle}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -2015,7 +2025,12 @@ function App() {
           <p className="header-subtitle">MBS Charging Station Analytics</p>
         </div>
         <div className="header-right">
-          <button className="refresh-btn-header" onClick={handleRefresh}>
+          {user && <span className="user-email">{user.email}</span>}
+          <button
+            className="refresh-btn-header"
+            onClick={handleRefresh}
+            title="Refresh data"
+          >
             <svg
               viewBox="0 0 24 24"
               width="20"
@@ -2027,6 +2042,24 @@ function App() {
               <path d="M23 4v6h-6" />
               <path d="M1 20v-6h6" />
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+          <button
+            className="logout-btn-header"
+            onClick={logout}
+            title="Sign out"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
           </button>
           <div className="search-box">
