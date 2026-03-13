@@ -1,34 +1,79 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import Logo from "./assets/hubcharge-logo.png";
 
 export default function Layout({ children }) {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!isAuthenticated) {
     return children;
   }
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="dashboard">
+      {/* Mobile menu overlay */}
+      <div
+        className={`sidebar-overlay ${mobileMenuOpen ? "visible" : ""}`}
+        onClick={closeMobileMenu}
+      />
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${mobileMenuOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <div className="logo">
-            {/* <img
-              src={Logo}
-              alt="icon"
-              style={{ width: 150, height: 70, objectFit: "contain" }}
-            /> */}
-            <span style={{ fontSize: 20 }}>EV Analytics</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+            <span>EV Analytics</span>
           </div>
+          {/* Close button for mobile */}
+          <button
+            className="mobile-close-btn"
+            onClick={closeMobileMenu}
+            aria-label="Close menu"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <nav className="sidebar-nav">
+          {/* User info on mobile */}
+          {user && (
+            <div className="nav-item user-info-item">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span className="user-email-sidebar">{user.email}</span>
+            </div>
+          )}
           <Link
             to="/"
             className={`nav-item ${location.pathname === "/" ? "active" : ""}`}
+            onClick={closeMobileMenu}
           >
             <svg
               viewBox="0 0 24 24"
@@ -46,6 +91,7 @@ export default function Layout({ children }) {
           <Link
             to="/calculator"
             className={`nav-item ${location.pathname === "/calculator" ? "active" : ""}`}
+            onClick={closeMobileMenu}
           >
             <svg
               viewBox="0 0 24 24"
@@ -66,7 +112,13 @@ export default function Layout({ children }) {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="refresh-btn" onClick={logout}>
+          <button
+            className="refresh-btn"
+            onClick={() => {
+              logout();
+              closeMobileMenu();
+            }}
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -81,6 +133,24 @@ export default function Layout({ children }) {
           </button>
         </div>
       </aside>
+
+      {/* Mobile menu button */}
+      <button
+        className="mobile-menu-btn"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
 
       {/* Main Content */}
       <main className="main-content">{children}</main>

@@ -1530,59 +1530,17 @@ function App() {
       let count = 0;
 
       sessions.forEach((s) => {
-        // CASE 1: bucket data available
-        if (s.buckets && s.buckets.length > 0) {
-          const first10 = s.buckets.slice(0, 10);
+        // Use the pre-calculated kwh_10_min value for consistency with CSV export
+        // This ensures stats display matches what users see when they calculate averages in CSV
+        const kwh = s.kwh_10_min || 0;
+        const kw = s.kw_10_min || 0;
+        const socGain = s.soc_10_min_gain || 0;
 
-          // console.log("First 10 buckets for session", s.session_id, first10);
-
-          if (first10.length > 0) {
-            const sumKw = first10.reduce(
-              (sum, b) => sum + (b.avgPowerKw || 0),
-              0,
-            );
-
-            // console.log("sum kW:", sumKw, "for session", s.session_id);
-
-            const avgKw = sumKw / first10.length;
-            const kwh = sumKw / 60;
-
-            // console.log(
-            //   `Session ${s.session_id}: First 10 min avg power = ${avgKw.toFixed(
-            //     2,
-            //   )} kW, kWh = ${kwh.toFixed(2)}`,
-            // );
-
-            const socStart = first10[0]?.socPercent;
-            const socEnd = first10[first10.length - 1]?.socPercent;
-            const socGain = socEnd - socStart;
-
-            totalKw += avgKw;
-            totalKwh += kwh;
-            totalSoc += socGain;
-            count++;
-          }
-        }
-
-        // CASE 2: NO bucket data → only exact 10 minute sessions
-        else if (s.duration_minutes === 10) {
-          const kwh = s.total_kwh || 0;
-          const kw = s.average_kw || 0;
-          const socGain =
-            s.soc_gain ??
-            (s.soc_end != null && s.soc_start != null
-              ? s.soc_end - s.soc_start
-              : 0);
-
-          if (kw > 0 && kwh > 0) {
-            totalKw += kw;
-            totalKwh += kwh;
-            totalSoc += socGain;
-            count++;
-          }
-        }
-        if (label === "400V") {
-          console.log(`Total kWh for ${label}:`, totalKwh);
+        if (kwh > 0) {
+          totalKwh += kwh;
+          totalKw += kw;
+          totalSoc += socGain;
+          count++;
         }
       });
 
@@ -2326,11 +2284,28 @@ function App() {
       {/* Header */}
       <header className="main-header">
         <div className="header-left">
-          <h1>Session Dashboard</h1>
-          <p className="header-subtitle">MBS Charging Station Analytics</p>
+          <h2>EV Session Dashboard</h2>
+          <p className="header-subtitle">MBS Analytics</p>
         </div>
         <div className="header-right">
           {user && <span className="user-email">{user.email}</span>}
+          <div className="search-box">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search sessions..."
+              value={filters.search}
+              onChange={(e) => updateFilter("search", e.target.value)}
+            />
+          </div>
           <button
             className="refresh-btn-header"
             onClick={handleRefresh}
@@ -2367,23 +2342,6 @@ function App() {
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
           </button>
-          <div className="search-box">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search sessions..."
-              value={filters.search}
-              onChange={(e) => updateFilter("search", e.target.value)}
-            />
-          </div>
         </div>
       </header>
 
@@ -2392,7 +2350,11 @@ function App() {
         <div className="filters-header">
           <h2>Filters</h2>
           <div className="filters-actions">
-            <button className="download-csv-btn" onClick={downloadCSV}>
+            <button
+              className="download-csv-btn"
+              onClick={downloadCSV}
+              title="Download CSV"
+            >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -2403,7 +2365,7 @@ function App() {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Download CSV
+              <span>Download CSV</span>
             </button>
             <button className="reset-filters-btn" onClick={resetFilters}>
               Clear All
