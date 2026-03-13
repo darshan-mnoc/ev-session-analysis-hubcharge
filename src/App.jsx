@@ -1682,7 +1682,7 @@ function App() {
   const performanceChartData = useMemo(() => {
     // Filter sessions that have bucket data
     const sessionsWithBuckets = filteredData.filter(
-      (s) => s.buckets && s.buckets.length >= 10,
+      (s) => s.buckets && s.buckets.length >= 0,
     );
 
     // Separate by voltage architecture
