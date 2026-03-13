@@ -1490,7 +1490,7 @@ button {
 /* 3-column: chart | panel | chart */
 .performance-charts-with-panel {
   display: grid;
-  grid-template-columns: 1fr 260px 1fr;
+  grid-template-columns: 1fr 280px;
   gap: 14px;
   align-items: stretch;
   width: 100%;
@@ -1535,6 +1535,116 @@ button {
   color: var(--text-primary);
   margin: 0;
   white-space: nowrap;
+}
+
+/* Wide performance chart box */
+.performance-chart-box.wide {
+  flex: 2;
+  min-width: 500px;
+}
+
+/* Unified chart header */
+.chart-box-header.unified {
+  margin-bottom: 12px;
+}
+
+.chart-controls-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chart-title-group h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.chart-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: block;
+}
+
+.chart-selectors {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.selector-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chart-select {
+  padding: 5px 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 90px;
+}
+
+.chart-select:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-hover);
+}
+
+.chart-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+}
+
+.arch-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-base);
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.arch-btn {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.arch-btn:hover {
+  color: var(--text-primary);
+}
+
+.arch-btn.active {
+  background: #22c55e;
+  color: white;
+}
+
+.arch-btn.accent.active {
+  background: var(--accent);
 }
 
 .chart-hint {
@@ -1856,9 +1966,96 @@ svg:focus {
   box-shadow: var(--shadow-md);
 }
 
+.chart-mini-tooltip.enhanced {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.mini-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.mini-tooltip-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
 .mini-tooltip-sep {
   color: var(--text-muted);
   font-size: 8px;
+}
+
+/* Enhanced chart tooltip */
+.chart-tooltip-enhanced {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-lg);
+  min-width: 160px;
+}
+
+.tooltip-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tooltip-x-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tooltip-car-count {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tooltip-main-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.tooltip-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tooltip-stat .stat-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tooltip-stat .stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tooltip-percentiles {
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
 }
 
 /* ============================================================
@@ -1898,6 +2095,7 @@ svg:focus {
   max-height: 900px;
   overflow-y: auto;
   padding-right: 4px;
+  padding-top: 5px;
 }
 
 /* ── Session Card ──────────────────────────────────────── */

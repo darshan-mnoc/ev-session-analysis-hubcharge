@@ -75,7 +75,7 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
   // Reset page when data changes
   useEffect(() => {
     setPage(0);
-  }, [data?.minute, data?.chartKey, data?.sessions?.length]);
+  }, [data?.minute, data?.soc, data?.chartKey, data?.sessions?.length]);
 
   if (!data) {
     return (
@@ -99,7 +99,11 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
     );
   }
 
-  const { minute, sessions = [], unit, chartLabel } = data;
+  const { minute, sessions = [], unit, chartLabel, xAxisKey } = data;
+
+  // Determine the x-axis value and label based on xAxisKey
+  const xValue = data[xAxisKey] ?? minute;
+  const xLabel = xAxisKey === "soc" ? `${xValue}% SOC` : `Minute ${xValue}`;
 
   // Sort sessions by value (low to high)
   const sortedSessions = [...sessions].sort(
@@ -114,7 +118,7 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
 
   return (
     <div className={`chart-info-panel ${locked ? "locked" : ""}`}>
-      {/* Header with minute and car count */}
+      {/* Header with x-axis value and car count */}
       <div className="cip-header-compact">
         <div className="cip-header-top">
           <span className="cip-chart-label">{chartLabel}</span>
@@ -130,14 +134,14 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
           )}
         </div>
         <div className="cip-header-main">
-          <span className="cip-minute-large">Minute {minute}</span>
+          <span className="cip-minute-large">{xLabel}</span>
           <span className="cip-car-count">{sessions.length} cars</span>
         </div>
       </div>
 
       {/* Column headers */}
       <div className="cip-column-header">
-        <span className="cip-col-car">Car ID</span>
+        <span className="cip-col-car">CAR ID</span>
         <span className="cip-col-value">{unit}</span>
       </div>
 
@@ -190,6 +194,8 @@ const PerformanceBandChart = ({
   sessionCount,
   colors,
   chartLabel = "",
+  xAxisKey = "minute",
+  xAxisLabel = "Minutes",
   onHover,
   onPointClick,
 }) => {
@@ -197,7 +203,7 @@ const PerformanceBandChart = ({
   const gradId = `gb_${unit.replace(/\W/g, "")}_${accentColor.replace(/\W/g, "")}`;
 
   const extractPoint = (label) => {
-    const point = data.find((d) => d.minute === label);
+    const point = data.find((d) => d[xAxisKey] === label);
     if (!point) return null;
     const sessions = [];
     // Find all session keys and extract data for each
@@ -214,7 +220,8 @@ const PerformanceBandChart = ({
       }
     });
     return {
-      minute: point.minute,
+      [xAxisKey]: point[xAxisKey],
+      minute: point.minute ?? point.soc, // For backward compatibility
       sessions,
       median: point.median ?? point.average ?? 0,
       p10: point.band_outer_base ?? 0,
@@ -224,6 +231,7 @@ const PerformanceBandChart = ({
       showBands: !showIndividual,
       unit,
       chartLabel,
+      xAxisKey,
     };
   };
 
@@ -261,7 +269,7 @@ const PerformanceBandChart = ({
 
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis
-          dataKey="minute"
+          dataKey={xAxisKey}
           axisLine={false}
           tickLine={false}
           stroke="var(--text-muted)"
@@ -287,26 +295,69 @@ const PerformanceBandChart = ({
           }}
         />
 
-        {/* Light tooltip showing minute and car count */}
+        {/* Enhanced tooltip with insights */}
         <Tooltip
           content={({ label, payload }) => {
-            if (!label || !payload || payload.length === 0) return null;
-            // Count valid sessions - same logic as extractPoint
+            if (label == null || !payload || payload.length === 0) return null;
             const pointData = payload[0]?.payload || {};
+
+            // Count valid sessions and collect values
             let carCount = 0;
+            const values = [];
             Object.keys(pointData).forEach((key) => {
               if (key.startsWith("session_")) {
                 const idx = key.replace("session_", "");
                 if (pointData[key] != null && pointData[`id_${idx}`] != null) {
                   carCount++;
+                  values.push(pointData[key]);
                 }
               }
             });
+
+            if (values.length === 0) return null;
+
+            const sortedVals = [...values].sort((a, b) => a - b);
+            const avg =
+              pointData.average ??
+              values.reduce((a, b) => a + b, 0) / values.length;
+            const median =
+              pointData.median ?? sortedVals[Math.floor(sortedVals.length / 2)];
+            const min = sortedVals[0];
+            const max = sortedVals[sortedVals.length - 1];
+            const p10 = pointData.band_outer_base ?? min;
+            const p90 =
+              (pointData.band_outer_base ?? 0) +
+                (pointData.band_outer_delta ?? 0) || max;
+            const xLabel = xAxisKey === "soc" ? `${label}%` : `${label} min`;
+
             return (
-              <div className="chart-mini-tooltip">
-                <span>Min {label}</span>
-                <span className="mini-tooltip-sep">•</span>
-                <span>{carCount} cars</span>
+              <div className="chart-tooltip-enhanced">
+                <div className="tooltip-header-row">
+                  <span className="tooltip-x-label">{xLabel}</span>
+                  <span className="tooltip-car-count">{carCount} sessions</span>
+                </div>
+                <div className="tooltip-main-stats">
+                  <div className="tooltip-stat">
+                    <span className="stat-label">Avg</span>
+                    <span className="stat-value">{avg.toFixed(1)}</span>
+                  </div>
+                  <div className="tooltip-stat">
+                    <span className="stat-label">Med</span>
+                    <span className="stat-value">{median.toFixed(1)}</span>
+                  </div>
+                  <div className="tooltip-stat">
+                    <span className="stat-label">Range</span>
+                    <span className="stat-value">
+                      {min.toFixed(1)} - {max.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+                <div className="tooltip-percentiles">
+                  <span>
+                    80% of sessions fall between {p10.toFixed(1)} -{" "}
+                    {p90.toFixed(1)} {unit}
+                  </span>
+                </div>
               </div>
             );
           }}
@@ -692,9 +743,11 @@ const TIME_RANGE_OPTIONS = [
 function App() {
   const {
     isAuthenticated,
+    hasApiAccess,
     isLoading: authLoading,
     handleUnauthorized,
     authError,
+    apiAccessError,
     getAuthHeader,
     login,
     loginWithGoogle,
@@ -754,6 +807,12 @@ function App() {
   const [kwChartView, setKwChartView] = useState("400V");
   const [voltageCurrentChartView, setVoltageCurrentChartView] =
     useState("400V-A"); // "400V-A", "800V-A", "400V-V", "800V-V"
+
+  // Axis selection for performance charts
+  // Y-axis: "kW" | "kWh" | "$/kWh" | "voltage" | "current"
+  // X-axis: "minutes" | "soc"
+  const [chartYAxis, setChartYAxis] = useState("kW");
+  const [chartXAxis, setChartXAxis] = useState("minutes");
 
   const [chartInfoData, setChartInfoData] = useState(null); // live hover
   const [lockedChartInfo, setLockedChartInfo] = useState(null); // click-locked
@@ -934,6 +993,8 @@ function App() {
               durationSec: Number(b.durationSec || b.duration_sec || 60),
             }));
           }
+
+          // console.log("Bucket", session.session_id, buckets);
 
           // Calculate voltage architecture (400V or 800V) based on average voltage
           let avgVoltage = 0;
@@ -1128,7 +1189,7 @@ function App() {
         .filter((session) => {
           const validSocGain =
             !isNaN(session.soc_gain) && session.soc_gain !== null;
-          const validKwh = session.estimated_kwh_10_min > 0;
+          // const validKwh = session.estimated_kwh_10_min > 0;
           return validSocGain;
         });
 
@@ -1139,9 +1200,10 @@ function App() {
         (s) => s.buckets && s.buckets.length > 0,
       );
 
-      console.log(
-        `Sessions with chart data: ${sessionsWithBuckets.length} / ${mergedSessions.length}`,
-      );
+      // console.log(
+      //   `Sessions with chart data: ${sessionsWithBuckets.length} / ${mergedSessions.length}`,
+      // );
+
       if (sessionsWithBuckets.length > 0) {
         console.log(
           "Sample session with buckets:",
@@ -1175,13 +1237,13 @@ function App() {
     fetchData();
   };
 
-  // Auto-fetch data when authenticated
+  // Auto-fetch data when authenticated and API access verified
   useEffect(() => {
-    if (isAuthenticated && !authLoading && !hasFetchedRef.current && !loading) {
+    if (hasApiAccess && !authLoading && !hasFetchedRef.current && !loading) {
       hasFetchedRef.current = true;
       fetchData();
     }
-  }, [isAuthenticated, authLoading, loading, fetchData]);
+  }, [hasApiAccess, authLoading, loading, fetchData]);
 
   // Filter options
   const filterOptions = useMemo(() => {
@@ -1461,24 +1523,26 @@ function App() {
     const avgSocGain400V = avgSocGainFn(sessions400V);
     const avgSocGain800V = avgSocGainFn(sessions800V);
 
-    const avg10MinStats = (sessions) => {
+    const avg10MinStats = (sessions, label = "") => {
       let totalKwh = 0;
       let totalKw = 0;
       let totalSoc = 0;
       let count = 0;
-
-      console.log("sessions length for avg10MinStats:", sessions.length);
 
       sessions.forEach((s) => {
         // CASE 1: bucket data available
         if (s.buckets && s.buckets.length > 0) {
           const first10 = s.buckets.slice(0, 10);
 
+          // console.log("First 10 buckets for session", s.session_id, first10);
+
           if (first10.length > 0) {
             const sumKw = first10.reduce(
               (sum, b) => sum + (b.avgPowerKw || 0),
               0,
             );
+
+            // console.log("sum kW:", sumKw, "for session", s.session_id);
 
             const avgKw = sumKw / first10.length;
             const kwh = sumKw / 60;
@@ -1517,18 +1581,22 @@ function App() {
             count++;
           }
         }
+        if (label === "400V") {
+          console.log(`Total kWh for ${label}:`, totalKwh);
+        }
       });
 
-      // console.log(
-      //   "avgKwh:",
-      //   totalKwh,
-      //   "avgKw:",
-      //   totalKw,
-      //   "avgSoc:",
-      //   totalSoc,
-      //   "count:",
-      //   count,
-      // );
+      console.log(
+        "avgKwh10Min:",
+        totalKwh,
+        "avgKw10Min:",
+        totalKw,
+        "avgSoc10Min:",
+        totalSoc,
+        "count:",
+        count,
+        `for ${label} sessions (${sessions.length} total)`,
+      );
 
       return {
         avgKw: count ? totalKw / count : 0,
@@ -1551,15 +1619,15 @@ function App() {
     const avgKwhMBS2_800V = avgKwh(sessionsMBS2_800V);
 
     const stats10All = avg10MinStats(filteredData);
-    const stats10_400V = avg10MinStats(sessions400V);
-    const stats10_800V = avg10MinStats(sessions800V);
+    const stats10_400V = avg10MinStats(sessions400V, "400V");
+    const stats10_800V = avg10MinStats(sessions800V, "800V");
     // console.log(
     //   "Stats for all sessions with 10-min bucket data:",
     //   stats10_400V,
     // );
 
-    const stats10_MBS1 = avg10MinStats(sessionsMBS1);
-    const stats10_MBS2 = avg10MinStats(sessionsMBS2);
+    const stats10_MBS1 = avg10MinStats(sessionsMBS1, "MBS1");
+    const stats10_MBS2 = avg10MinStats(sessionsMBS2, "MBS2");
 
     // Counts
     const count400V = sessions400V.length;
@@ -1675,8 +1743,39 @@ function App() {
       return colors;
     };
 
-    const processChartData = (sessions, dataKey) => {
-      if (sessions.length === 0) return { chartData: [], sessionCount: 0 };
+    // Calculate percentiles helper
+    const calcPercentiles = (values) => {
+      if (values.length === 0) {
+        return {
+          average: 0,
+          median: 0,
+          band_outer_base: 0,
+          band_outer_delta: 0,
+          band_inner_base: 0,
+          band_inner_delta: 0,
+        };
+      }
+      const sorted = [...values].sort((a, b) => a - b);
+      const pct = (p) => {
+        const i = (p / 100) * (sorted.length - 1);
+        const lo = Math.floor(i);
+        const hi = Math.ceil(i);
+        return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+      };
+      return {
+        average: values.reduce((a, b) => a + b, 0) / values.length,
+        median: pct(50),
+        band_outer_base: pct(10),
+        band_outer_delta: pct(90) - pct(10),
+        band_inner_base: pct(25),
+        band_inner_delta: pct(75) - pct(25),
+      };
+    };
+
+    // Process chart data by MINUTES (X-axis = time)
+    const processChartDataByMinutes = (sessions, dataKey) => {
+      if (sessions.length === 0)
+        return { chartData: [], sessionCount: 0, colors: [] };
 
       const colors = generateColors(sessions.length);
       const maxMinutes = Math.max(
@@ -1691,9 +1790,88 @@ function App() {
         sessions.forEach((session, idx) => {
           const bucket = session.buckets?.[minute];
           if (bucket) {
-            const value = bucket[dataKey] ?? 0;
+            let value;
+            if (dataKey === "cumulativeKwh") {
+              // Calculate cumulative kWh up to this minute
+              value = session.buckets
+                .slice(0, minute + 1)
+                .reduce((sum, b) => sum + (b.avgPowerKw || 0) / 60, 0);
+            } else if (dataKey === "pricePerKwh") {
+              // Calculate $/kWh at this point (total cost / cumulative kWh)
+              const cumulativeKwh = session.buckets
+                .slice(0, minute + 1)
+                .reduce((sum, b) => sum + (b.avgPowerKw || 0) / 60, 0);
+              const pricePerMinute =
+                session.final_cost / session.duration_minutes;
+              const cumulativeCost = pricePerMinute * (minute + 1);
+              value = cumulativeKwh > 0 ? cumulativeCost / cumulativeKwh : 0;
+            } else {
+              value = bucket[dataKey] ?? 0;
+            }
             values.push(value);
-            // Always store ALL sessions for tooltip, regardless of count
+            dataPoint[`session_${idx}`] = value;
+            dataPoint[`id_${idx}`] = session.session_id ?? `Session ${idx + 1}`;
+            dataPoint[`color_${idx}`] = colors[idx];
+          }
+        });
+
+        Object.assign(dataPoint, calcPercentiles(values));
+        chartData.push(dataPoint);
+      }
+
+      return { chartData, sessionCount: sessions.length, colors };
+    };
+
+    // Process chart data by SOC (X-axis = SOC 0-100%)
+    const processChartDataBySoC = (sessions, dataKey) => {
+      if (sessions.length === 0)
+        return { chartData: [], sessionCount: 0, colors: [] };
+
+      const colors = generateColors(sessions.length);
+      const chartData = [];
+
+      // Create data points for SOC 0-100 in steps of 1%
+      for (let soc = 0; soc <= 100; soc++) {
+        const dataPoint = { soc };
+        const values = [];
+
+        sessions.forEach((session, idx) => {
+          if (!session.buckets) return;
+
+          // Find buckets at or near this SOC
+          const bucketsAtSoc = session.buckets.filter((b) => {
+            const bucketSoc = Math.round(b.socPercent ?? 0);
+            return bucketSoc === soc;
+          });
+
+          if (bucketsAtSoc.length > 0) {
+            let value;
+            // Find the minute index for this SOC bucket
+            const bucketIdx = session.buckets.findIndex(
+              (b) => Math.round(b.socPercent ?? 0) === soc,
+            );
+
+            if (dataKey === "cumulativeKwh") {
+              // Cumulative kWh up to this SOC point
+              value = session.buckets
+                .slice(0, bucketIdx + 1)
+                .reduce((sum, b) => sum + (b.avgPowerKw || 0) / 60, 0);
+            } else if (dataKey === "pricePerKwh") {
+              // $/kWh at this SOC point
+              const cumulativeKwh = session.buckets
+                .slice(0, bucketIdx + 1)
+                .reduce((sum, b) => sum + (b.avgPowerKw || 0) / 60, 0);
+              const pricePerMinute =
+                session.final_cost / session.duration_minutes;
+              const cumulativeCost = pricePerMinute * (bucketIdx + 1);
+              value = cumulativeKwh > 0 ? cumulativeCost / cumulativeKwh : 0;
+            } else {
+              // Average the values for buckets at this SOC
+              value =
+                bucketsAtSoc.reduce((sum, b) => sum + (b[dataKey] ?? 0), 0) /
+                bucketsAtSoc.length;
+            }
+            values.push(value);
             dataPoint[`session_${idx}`] = value;
             dataPoint[`id_${idx}`] = session.session_id ?? `Session ${idx + 1}`;
             dataPoint[`color_${idx}`] = colors[idx];
@@ -1701,42 +1879,137 @@ function App() {
         });
 
         if (values.length > 0) {
-          const sorted = [...values].sort((a, b) => a - b);
-          const pct = (p) => {
-            const i = (p / 100) * (sorted.length - 1);
-            const lo = Math.floor(i);
-            const hi = Math.ceil(i);
-            return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
-          };
-          dataPoint.average = values.reduce((a, b) => a + b, 0) / values.length;
-          dataPoint.median = pct(50);
-          dataPoint.band_outer_base = pct(10);
-          dataPoint.band_outer_delta = pct(90) - pct(10);
-          dataPoint.band_inner_base = pct(25);
-          dataPoint.band_inner_delta = pct(75) - pct(25);
-        } else {
-          dataPoint.average = dataPoint.median = 0;
-          dataPoint.band_outer_base = dataPoint.band_outer_delta = 0;
-          dataPoint.band_inner_base = dataPoint.band_inner_delta = 0;
+          Object.assign(dataPoint, calcPercentiles(values));
+          chartData.push(dataPoint);
         }
-
-        chartData.push(dataPoint);
       }
 
       return { chartData, sessionCount: sessions.length, colors };
     };
 
     return {
-      kw400V: processChartData(sessions400V, "avgPowerKw"),
-      kw800V: processChartData(sessions800V, "avgPowerKw"),
-      current400V: processChartData(sessions400V, "avgCurrentA"),
-      current800V: processChartData(sessions800V, "avgCurrentA"),
-      voltage400V: processChartData(sessions400V, "avgVoltageV"),
-      voltage800V: processChartData(sessions800V, "avgVoltageV"),
+      // Minutes-based charts
+      kw400V: processChartDataByMinutes(sessions400V, "avgPowerKw"),
+      kw800V: processChartDataByMinutes(sessions800V, "avgPowerKw"),
+      current400V: processChartDataByMinutes(sessions400V, "avgCurrentA"),
+      current800V: processChartDataByMinutes(sessions800V, "avgCurrentA"),
+      voltage400V: processChartDataByMinutes(sessions400V, "avgVoltageV"),
+      voltage800V: processChartDataByMinutes(sessions800V, "avgVoltageV"),
+      kwh400V: processChartDataByMinutes(sessions400V, "cumulativeKwh"),
+      kwh800V: processChartDataByMinutes(sessions800V, "cumulativeKwh"),
+      pricePerKwh400V: processChartDataByMinutes(sessions400V, "pricePerKwh"),
+      pricePerKwh800V: processChartDataByMinutes(sessions800V, "pricePerKwh"),
+
+      // SOC-based charts
+      kwBySoc400V: processChartDataBySoC(sessions400V, "avgPowerKw"),
+      kwBySoc800V: processChartDataBySoC(sessions800V, "avgPowerKw"),
+      currentBySoc400V: processChartDataBySoC(sessions400V, "avgCurrentA"),
+      currentBySoc800V: processChartDataBySoC(sessions800V, "avgCurrentA"),
+      voltageBySoc400V: processChartDataBySoC(sessions400V, "avgVoltageV"),
+      voltageBySoc800V: processChartDataBySoC(sessions800V, "avgVoltageV"),
+      kwhBySoc400V: processChartDataBySoC(sessions400V, "cumulativeKwh"),
+      kwhBySoc800V: processChartDataBySoC(sessions800V, "cumulativeKwh"),
+      pricePerKwhBySoc400V: processChartDataBySoC(sessions400V, "pricePerKwh"),
+      pricePerKwhBySoc800V: processChartDataBySoC(sessions800V, "pricePerKwh"),
+
       count400V: sessions400V.length,
       count800V: sessions800V.length,
     };
   }, [filteredData]);
+
+  // Get chart data based on axis selection
+  const getChartData = useCallback(
+    (voltageArch, yAxis, xAxis) => {
+      const prefix = xAxis === "soc" ? "BySoc" : "";
+      const suffix = voltageArch;
+
+      const keyMap = {
+        kW: `kw${prefix}${suffix}`,
+        kWh: `kwh${prefix}${suffix}`,
+        "$/kWh": `pricePerKwh${prefix}${suffix}`,
+        voltage: `voltage${prefix}${suffix}`,
+        current: `current${prefix}${suffix}`,
+      };
+
+      const key = keyMap[yAxis];
+      return (
+        performanceChartData[key] || {
+          chartData: [],
+          sessionCount: 0,
+          colors: [],
+        }
+      );
+    },
+    [performanceChartData],
+  );
+
+  // Get unit label based on Y-axis
+  const getYAxisUnit = (yAxis) => {
+    const units = {
+      kW: "kW",
+      kWh: "kWh",
+      "$/kWh": "$/kWh",
+      voltage: "V",
+      current: "A",
+    };
+    return units[yAxis] || "";
+  };
+
+  // Legacy compatibility - keep old processChartData for backward compatibility
+  const processChartData = (sessions, dataKey) => {
+    if (sessions.length === 0)
+      return { chartData: [], sessionCount: 0, colors: [] };
+
+    const colors = [];
+    for (let i = 0; i < sessions.length; i++) {
+      const hue = (i * 137.508) % 360;
+      colors.push(`hsl(${hue}, 60%, 50%)`);
+    }
+    const maxMinutes = Math.max(
+      ...sessions.map((s) => (s.buckets ? s.buckets.length : 0)),
+    );
+    const chartData = [];
+
+    for (let minute = 0; minute < maxMinutes; minute++) {
+      const dataPoint = { minute: minute + 1 };
+      const values = [];
+
+      sessions.forEach((session, idx) => {
+        const bucket = session.buckets?.[minute];
+        if (bucket) {
+          const value = bucket[dataKey] ?? 0;
+          values.push(value);
+          dataPoint[`session_${idx}`] = value;
+          dataPoint[`id_${idx}`] = session.session_id ?? `Session ${idx + 1}`;
+          dataPoint[`color_${idx}`] = colors[idx];
+        }
+      });
+
+      if (values.length > 0) {
+        const sorted = [...values].sort((a, b) => a - b);
+        const pct = (p) => {
+          const i = (p / 100) * (sorted.length - 1);
+          const lo = Math.floor(i);
+          const hi = Math.ceil(i);
+          return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+        };
+        dataPoint.average = values.reduce((a, b) => a + b, 0) / values.length;
+        dataPoint.median = pct(50);
+        dataPoint.band_outer_base = pct(10);
+        dataPoint.band_outer_delta = pct(90) - pct(10);
+        dataPoint.band_inner_base = pct(25);
+        dataPoint.band_inner_delta = pct(75) - pct(25);
+      } else {
+        dataPoint.average = dataPoint.median = 0;
+        dataPoint.band_outer_base = dataPoint.band_outer_delta = 0;
+        dataPoint.band_inner_base = dataPoint.band_inner_delta = 0;
+      }
+
+      chartData.push(dataPoint);
+    }
+
+    return { chartData, sessionCount: sessions.length, colors };
+  };
 
   // // Reset chart info panel when performanceChartData updates
   // useEffect(() => {
@@ -2010,6 +2283,38 @@ function App() {
               />
             </svg>
             Continue with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show API access error (authenticated but no API access)
+  if (apiAccessError) {
+    return (
+      <div className="auth-loading">
+        <div className="login-form-container">
+          <img src={Logo} alt="HubCharge" className="login-logo" />
+          <h2>Access Denied</h2>
+          <div className="login-error" style={{ marginTop: "16px" }}>
+            {apiAccessError}
+          </div>
+          <p
+            style={{
+              color: "var(--text-secondary)",
+              marginTop: "16px",
+              fontSize: "14px",
+            }}
+          >
+            Signed in as: {user?.email}
+          </p>
+          <button
+            type="button"
+            className="login-btn"
+            onClick={logout}
+            style={{ marginTop: "20px" }}
+          >
+            Sign Out
           </button>
         </div>
       </div>
@@ -2771,74 +3076,101 @@ function App() {
         performanceChartData.count800V > 0) && (
         <div className="performance-charts-section">
           <div className="performance-charts-with-panel">
-            {/* ── LEFT: kW Chart ────────────────────────────────────────── */}
-            <div className="performance-chart-box">
-              <div className="chart-box-header">
-                <div className="header-content">
-                  <h3>Performance Chart By kW</h3>
-                  <span className="chart-hint">
-                    💡 Click any data point to lock details in the panel
-                  </span>
-                </div>
-                <div className="chart-view-toggle">
-                  <button
-                    className={`toggle-btn ${kwChartView === "400V" ? "active" : ""}`}
-                    onClick={() => setKwChartView("400V")}
-                  >
-                    400V ({performanceChartData.count400V})
-                  </button>
-                  <button
-                    className={`toggle-btn accent ${kwChartView === "800V" ? "active" : ""}`}
-                    onClick={() => setKwChartView("800V")}
-                  >
-                    800V ({performanceChartData.count800V})
-                  </button>
+            {/* ── Main Performance Chart with Axis Selection ────────── */}
+            <div className="performance-chart-box wide">
+              <div className="chart-box-header unified">
+                <div className="chart-controls-row">
+                  <div className="chart-title-group">
+                    <h3>Performance Analysis</h3>
+                    <span className="chart-subtitle">
+                      {kwChartView} Architecture •{" "}
+                      {performanceChartData[`count${kwChartView}`]} sessions
+                    </span>
+                  </div>
+                  <div className="chart-selectors">
+                    <div className="selector-group">
+                      <span className="selector-label">Y-Axis</span>
+                      <select
+                        value={chartYAxis}
+                        onChange={(e) => setChartYAxis(e.target.value)}
+                        className="chart-select"
+                      >
+                        <option value="kW">Power (kW)</option>
+                        <option value="kWh">Energy (kWh)</option>
+                        <option value="$/kWh">Cost ($/kWh)</option>
+                        <option value="voltage">Voltage (V)</option>
+                        <option value="current">Current (A)</option>
+                      </select>
+                    </div>
+                    <div className="selector-group">
+                      <span className="selector-label">X-Axis</span>
+                      <select
+                        value={chartXAxis}
+                        onChange={(e) => setChartXAxis(e.target.value)}
+                        className="chart-select"
+                      >
+                        <option value="minutes">Time (min)</option>
+                        <option value="soc">SOC (%)</option>
+                      </select>
+                    </div>
+                    <div className="selector-group">
+                      <span className="selector-label">Arch</span>
+                      <div className="arch-toggle">
+                        <button
+                          className={`arch-btn ${kwChartView === "400V" ? "active" : ""}`}
+                          onClick={() => setKwChartView("400V")}
+                        >
+                          400V
+                        </button>
+                        <button
+                          className={`arch-btn accent ${kwChartView === "800V" ? "active" : ""}`}
+                          onClick={() => setKwChartView("800V")}
+                        >
+                          800V
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="chart-container">
-                {kwChartView === "400V" &&
-                performanceChartData.kw400V.sessionCount > 0 ? (
-                  <PerformanceBandChart
-                    data={performanceChartData.kw400V.chartData}
-                    unit="kW"
-                    accentColor="#22c55e"
-                    sessionCount={performanceChartData.kw400V.sessionCount}
-                    colors={performanceChartData.kw400V.colors}
-                    chartLabel="kW · 400V Architecture"
-                    onHover={setChartInfoData}
-                    onPointClick={(d) =>
-                      setLockedChartInfo((prev) =>
-                        prev?.minute === d?.minute &&
-                        prev?.chartLabel === d?.chartLabel
-                          ? null
-                          : d,
-                      )
-                    }
-                  />
-                ) : kwChartView === "800V" &&
-                  performanceChartData.kw800V.sessionCount > 0 ? (
-                  <PerformanceBandChart
-                    data={performanceChartData.kw800V.chartData}
-                    unit="kW"
-                    accentColor="var(--accent)"
-                    sessionCount={performanceChartData.kw800V.sessionCount}
-                    colors={performanceChartData.kw800V.colors}
-                    chartLabel="kW · 800V Architecture"
-                    onHover={setChartInfoData}
-                    onPointClick={(d) =>
-                      setLockedChartInfo((prev) =>
-                        prev?.minute === d?.minute &&
-                        prev?.chartLabel === d?.chartLabel
-                          ? null
-                          : d,
-                      )
-                    }
-                  />
-                ) : (
-                  <div className="no-data-message">
-                    No sessions with bucket data for {kwChartView}
-                  </div>
-                )}
+                {(() => {
+                  const chartKey = kwChartView === "400V" ? "400V" : "800V";
+                  const data = getChartData(chartKey, chartYAxis, chartXAxis);
+                  const unit = getYAxisUnit(chartYAxis);
+                  const accentColor =
+                    kwChartView === "400V" ? "#22c55e" : "var(--accent)";
+                  const xAxisKey = chartXAxis === "soc" ? "soc" : "minute";
+
+                  if (data.sessionCount > 0) {
+                    return (
+                      <PerformanceBandChart
+                        data={data.chartData}
+                        unit={unit}
+                        accentColor={accentColor}
+                        sessionCount={data.sessionCount}
+                        colors={data.colors}
+                        chartLabel={`${chartYAxis} · ${kwChartView} Architecture`}
+                        xAxisKey={xAxisKey}
+                        xAxisLabel={chartXAxis === "soc" ? "SOC %" : "Minutes"}
+                        onHover={setChartInfoData}
+                        onPointClick={(d) =>
+                          setLockedChartInfo((prev) =>
+                            prev?.[xAxisKey] === d?.[xAxisKey] &&
+                            prev?.chartLabel === d?.chartLabel
+                              ? null
+                              : d,
+                          )
+                        }
+                      />
+                    );
+                  }
+                  return (
+                    <div className="no-data-message">
+                      No sessions with bucket data for {kwChartView}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -2848,122 +3180,6 @@ function App() {
               lockedData={lockedChartInfo}
               onUnlock={() => setLockedChartInfo(null)}
             />
-
-            {/* ── RIGHT: Voltage & Current Chart ────────────────────────── */}
-            <div className="performance-chart-box">
-              <div className="chart-box-header">
-                <h3>Performance Chart By Voltage &amp; Current</h3>
-                <div className="chart-view-toggle multi">
-                  <button
-                    className={`toggle-btn ${voltageCurrentChartView === "400V-A" ? "active" : ""}`}
-                    onClick={() => setVoltageCurrentChartView("400V-A")}
-                  >
-                    400V (A)
-                  </button>
-                  <button
-                    className={`toggle-btn accent ${voltageCurrentChartView === "800V-A" ? "active" : ""}`}
-                    onClick={() => setVoltageCurrentChartView("800V-A")}
-                  >
-                    800V (A)
-                  </button>
-                  <button
-                    className={`toggle-btn ${voltageCurrentChartView === "400V-V" ? "active" : ""}`}
-                    onClick={() => setVoltageCurrentChartView("400V-V")}
-                  >
-                    400V (V)
-                  </button>
-                  <button
-                    className={`toggle-btn accent ${voltageCurrentChartView === "800V-V" ? "active" : ""}`}
-                    onClick={() => setVoltageCurrentChartView("800V-V")}
-                  >
-                    800V (V)
-                  </button>
-                </div>
-              </div>
-              <div className="chart-container">
-                {voltageCurrentChartView === "400V-A" &&
-                performanceChartData.current400V.sessionCount > 0 ? (
-                  <PerformanceBandChart
-                    data={performanceChartData.current400V.chartData}
-                    unit="A"
-                    accentColor="#22c55e"
-                    sessionCount={performanceChartData.current400V.sessionCount}
-                    colors={performanceChartData.current400V.colors}
-                    chartLabel="Current (A) · 400V Architecture"
-                    onHover={setChartInfoData}
-                    onPointClick={(d) =>
-                      setLockedChartInfo((prev) =>
-                        prev?.minute === d?.minute &&
-                        prev?.chartLabel === d?.chartLabel
-                          ? null
-                          : d,
-                      )
-                    }
-                  />
-                ) : voltageCurrentChartView === "800V-A" &&
-                  performanceChartData.current800V.sessionCount > 0 ? (
-                  <PerformanceBandChart
-                    data={performanceChartData.current800V.chartData}
-                    unit="A"
-                    accentColor="var(--accent)"
-                    sessionCount={performanceChartData.current800V.sessionCount}
-                    colors={performanceChartData.current800V.colors}
-                    chartLabel="Current (A) · 800V Architecture"
-                    onHover={setChartInfoData}
-                    onPointClick={(d) =>
-                      setLockedChartInfo((prev) =>
-                        prev?.minute === d?.minute &&
-                        prev?.chartLabel === d?.chartLabel
-                          ? null
-                          : d,
-                      )
-                    }
-                  />
-                ) : voltageCurrentChartView === "400V-V" &&
-                  performanceChartData.voltage400V.sessionCount > 0 ? (
-                  <PerformanceBandChart
-                    data={performanceChartData.voltage400V.chartData}
-                    unit="V"
-                    accentColor="#22c55e"
-                    sessionCount={performanceChartData.voltage400V.sessionCount}
-                    colors={performanceChartData.voltage400V.colors}
-                    chartLabel="Voltage (V) · 400V Architecture"
-                    onHover={setChartInfoData}
-                    onPointClick={(d) =>
-                      setLockedChartInfo((prev) =>
-                        prev?.minute === d?.minute &&
-                        prev?.chartLabel === d?.chartLabel
-                          ? null
-                          : d,
-                      )
-                    }
-                  />
-                ) : voltageCurrentChartView === "800V-V" &&
-                  performanceChartData.voltage800V.sessionCount > 0 ? (
-                  <PerformanceBandChart
-                    data={performanceChartData.voltage800V.chartData}
-                    unit="V"
-                    accentColor="var(--accent)"
-                    sessionCount={performanceChartData.voltage800V.sessionCount}
-                    colors={performanceChartData.voltage800V.colors}
-                    chartLabel="Voltage (V) · 800V Architecture"
-                    onHover={setChartInfoData}
-                    onPointClick={(d) =>
-                      setLockedChartInfo((prev) =>
-                        prev?.minute === d?.minute &&
-                        prev?.chartLabel === d?.chartLabel
-                          ? null
-                          : d,
-                      )
-                    }
-                  />
-                ) : (
-                  <div className="no-data-message">
-                    No sessions with bucket data
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       )}

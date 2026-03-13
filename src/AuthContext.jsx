@@ -19,10 +19,50 @@ export const useAuth = () => {
 
 // ─── provider ────────────────────────────────────────────────────────────────
 
+// API base URL for access verification
+const API_BASE_URL = "https://hubcharge.micronocinc.com/management/api";
+
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const [apiAccessVerified, setApiAccessVerified] = useState(false);
+  const [apiAccessError, setApiAccessError] = useState(null);
+
+  // ── verify API access ─────────────────────────────────────────────────────
+  const verifyApiAccess = async (accessToken) => {
+    try {
+      console.log("[Auth] Verifying API access...");
+      const response = await fetch(`${API_BASE_URL}/views/mini_view?limit=1`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("[Auth] API access verified");
+        setApiAccessVerified(true);
+        setApiAccessError(null);
+      } else if (response.status === 401 || response.status === 403) {
+        console.error("[Auth] API access denied - user not authorized");
+        setApiAccessVerified(false);
+        setApiAccessError(
+          "You don't have permission to access this portal. Please contact an administrator."
+        );
+      } else {
+        console.warn("[Auth] API returned unexpected status:", response.status);
+        // Allow access but log the issue
+        setApiAccessVerified(true);
+        setApiAccessError(null);
+      }
+    } catch (error) {
+      console.error("[Auth] API access check failed:", error);
+      setApiAccessVerified(false);
+      setApiAccessError(
+        "Unable to connect to the server. Please check your internet connection and try again."
+      );
+    }
+  };
 
   // ── bootstrap: check for existing session ─────────────────────────────────
   useEffect(() => {
@@ -42,6 +82,9 @@ export const AuthProvider = ({ children }) => {
         if (data?.session) {
           console.log("[Auth] Logged in:", data.session.user?.email);
           setSession(data.session);
+
+          // Verify API access
+          await verifyApiAccess(data.session.access_token);
         } else {
           console.log("[Auth] No active session, login required");
         }
@@ -90,6 +133,10 @@ export const AuthProvider = ({ children }) => {
 
     console.log("[Auth] Login success:", data.user?.email);
     setSession(data.session);
+
+    // Verify API access after login
+    await verifyApiAccess(data.session.access_token);
+
     return data.session;
   }, []);
 
@@ -146,6 +193,7 @@ export const AuthProvider = ({ children }) => {
 
   // ── derived state ─────────────────────────────────────────────────────────
   const isAuthenticated = !!session?.access_token;
+  const hasApiAccess = isAuthenticated && apiAccessVerified;
   const user = session?.user || null;
 
   return (
@@ -154,8 +202,10 @@ export const AuthProvider = ({ children }) => {
         session,
         user,
         isAuthenticated,
+        hasApiAccess,
         isLoading,
         authError,
+        apiAccessError,
         login,
         loginWithGoogle,
         logout,
