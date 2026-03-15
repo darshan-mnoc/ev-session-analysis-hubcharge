@@ -1,3 +1,4 @@
+import React from "react";
 import {
   createContext,
   useContext,
@@ -47,7 +48,7 @@ export const AuthProvider = ({ children }) => {
         console.error("[Auth] API access denied - user not authorized");
         setApiAccessVerified(false);
         setApiAccessError(
-          "You don't have permission to access this portal. Please contact an administrator."
+          "You don't have permission to access this portal. Please contact an administrator.",
         );
       } else {
         console.warn("[Auth] API returned unexpected status:", response.status);
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }) => {
       console.error("[Auth] API access check failed:", error);
       setApiAccessVerified(false);
       setApiAccessError(
-        "Unable to connect to the server. Please check your internet connection and try again."
+        "Unable to connect to the server. Please check your internet connection and try again.",
       );
     }
   };

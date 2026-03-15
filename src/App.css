@@ -1916,11 +1916,51 @@ svg:focus {
 }
 
 .cip-col-car,
+.cip-col-time,
 .cip-col-value {
   font-size: 9px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.cip-col-time {
+  text-align: center;
+  min-width: 55px;
+}
+
+/* Sortable column buttons */
+.cip-col-sort {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all var(--transition);
+  min-width: 55px;
+  margin-left: auto;
+}
+
+.cip-col-sort:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.cip-col-sort.active {
+  color: var(--accent);
+}
+
+.cip-col-sort.cip-col-value {
+  min-width: auto;
+  margin-left: auto;
 }
 
 .cip-sessions-list {
@@ -1960,6 +2000,15 @@ svg:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cip-time {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  min-width: 55px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .cip-val {

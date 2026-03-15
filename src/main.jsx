@@ -1,13 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './AuthContext.jsx'
-import Layout from './Layout.jsx'
-import './index.css'
-import App from './App.jsx'
-import Calculator from './Calculator.jsx'
+import React from "react";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./AuthContext.jsx";
+import Layout from "./Layout.jsx";
+import "./index.css";
+import App from "./App.jsx";
+import Calculator from "./Calculator.jsx";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
       <BrowserRouter>
@@ -20,4 +21,4 @@ createRoot(document.getElementById('root')).render(
       </BrowserRouter>
     </AuthProvider>
   </StrictMode>,
-)
+);
