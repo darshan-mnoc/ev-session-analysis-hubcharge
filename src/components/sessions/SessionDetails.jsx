@@ -7,6 +7,38 @@ import React, { useMemo } from "react";
 import { TIME_RANGE_OPTIONS } from "../../constants/config";
 import { ChartCard } from "../charts";
 
+// Helper to format time as MM:SS
+const formatTimeMinSec = (minutes) => {
+  const mins = Math.floor(minutes);
+  const secs = Math.round((minutes - mins) * 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
+// Get actual end time from last bucket
+const getActualEndTime = (buckets) => {
+  if (!buckets || buckets.length === 0) return null;
+
+  const lastBucket = buckets[buckets.length - 1];
+  const bucketIndex = buckets.length - 1;
+
+  // Try to parse range (e.g., "10:00-10:43")
+  if (lastBucket.label) {
+    const match = lastBucket.label.match(/(\d+):(\d+)-(\d+):(\d+)/);
+    if (match) {
+      const endMin = parseInt(match[3], 10);
+      const endSec = parseInt(match[4], 10);
+      return endMin + endSec / 60;
+    }
+  }
+
+  // Fallback: use durationSec
+  if (lastBucket.durationSec !== undefined && lastBucket.durationSec < 60) {
+    return bucketIndex + lastBucket.durationSec / 60;
+  }
+
+  return bucketIndex + 1;
+};
+
 const SessionDetails = ({
   session,
   chartTimeRange,
@@ -38,6 +70,23 @@ const SessionDetails = ({
       };
     });
   }, [session, chartTimeRange]);
+
+  // Calculate actual end time and stopped early status
+  const sessionEndInfo = useMemo(() => {
+    if (!session) return null;
+
+    const actualEndTime = getActualEndTime(session.buckets);
+    if (actualEndTime === null) return null;
+
+    const totalDuration = session.duration_minutes ?? 0;
+    const stoppedEarly = totalDuration >= Math.ceil(actualEndTime);
+
+    return {
+      actualEndTime,
+      actualEndTimeFormatted: formatTimeMinSec(actualEndTime),
+      stoppedEarly,
+    };
+  }, [session]);
 
   if (!session) {
     return (
@@ -116,8 +165,28 @@ const SessionDetails = ({
           <span className="detail-label">Duration</span>
           <span className="detail-value highlight">
             {session.duration_minutes} min
+            {sessionEndInfo?.actualEndTimeFormatted && (
+              <span className="actual-end-time">
+                {" "}
+                ({sessionEndInfo.actualEndTimeFormatted})
+              </span>
+            )}
           </span>
         </div>
+        {sessionEndInfo?.stoppedEarly && (
+          <div className="detail-item">
+            <span className="detail-label">Stopped At</span>
+            <span className="detail-value stopped-early-value">
+              {sessionEndInfo.actualEndTimeFormatted}
+            </span>
+          </div>
+        )}
+        {session.stop_reason && (
+          <div className="detail-item">
+            <span className="detail-label">Stop Reason</span>
+            <span className="detail-value">{session.stop_reason}</span>
+          </div>
+        )}
         <div className="detail-item">
           <span className="detail-label">Extensions</span>
           <span className="detail-value">

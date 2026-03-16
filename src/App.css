@@ -1557,7 +1557,7 @@ textarea {
 /* 3-column: chart | panel | chart */
 .performance-charts-with-panel {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 360px;
   gap: 14px;
   align-items: stretch;
   width: 100%;
@@ -1908,32 +1908,29 @@ svg:focus {
 
 .cip-column-header {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   padding: 5px 8px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-sm);
   margin-bottom: 5px;
 }
 
-.cip-col-car,
-.cip-col-time,
-.cip-col-value {
+/* Header: CAR ID takes flex space, matches .cip-id + .cip-dot */
+.cip-col-car {
+  flex: 1;
   font-size: 9px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.cip-col-time {
-  text-align: center;
-  min-width: 55px;
+  padding-left: 14px; /* account for dot width + gap */
 }
 
 /* Sortable column buttons */
 .cip-col-sort {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 2px;
   font-size: 9px;
   color: var(--text-muted);
@@ -1942,15 +1939,14 @@ svg:focus {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 2px 0;
   border-radius: 3px;
   transition: all var(--transition);
-  min-width: 55px;
-  margin-left: auto;
+  width: 50px;
+  text-align: right;
 }
 
 .cip-col-sort:hover {
-  background: rgba(255, 255, 255, 0.08);
   color: var(--text-secondary);
 }
 
@@ -1959,8 +1955,7 @@ svg:focus {
 }
 
 .cip-col-sort.cip-col-value {
-  min-width: auto;
-  margin-left: auto;
+  width: 55px;
 }
 
 .cip-sessions-list {
@@ -2002,13 +1997,42 @@ svg:focus {
   white-space: nowrap;
 }
 
-.cip-time {
+.cip-duration {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  min-width: 55px;
-  text-align: center;
+  font-size: 11px;
+  width: 50px;
+  text-align: right;
   flex-shrink: 0;
+}
+
+/* Stopped early indicator */
+.cip-session-row.stopped-early {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.cip-stopped-badge {
+  color: #ef4444;
+  font-size: 9px;
+  margin-left: 4px;
+  opacity: 0.9;
+}
+
+.cip-ended-badge {
+  color: #22c55e;
+  font-size: 9px;
+  margin-left: 4px;
+  opacity: 0.8;
+}
+
+.cip-time {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+  cursor: help;
 }
 
 .cip-val {
@@ -2017,13 +2041,9 @@ svg:focus {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
-}
-
-.cip-val small {
-  font-weight: 400;
-  color: var(--text-muted);
-  font-size: 10px;
-  margin-left: 1px;
+  font-size: 12px;
+  width: 55px;
+  text-align: right;
 }
 
 .cip-pagination {
@@ -2140,6 +2160,18 @@ svg:focus {
   background: var(--bg-hover);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.tooltip-time-range {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tooltip-time-range .time-range-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
 }
 
 .tooltip-main-stats {
@@ -2565,6 +2597,24 @@ svg:focus {
   color: var(--accent);
 }
 
+.detail-value .actual-end-time {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.detail-value.stopped-early-value {
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-value.stopped-early-value::before {
+  content: "⏹";
+  font-size: 10px;
+}
+
 /* Highlight Row */
 .detail-highlight-row {
   display: flex;
@@ -2808,7 +2858,7 @@ svg:focus {
   }
 
   .performance-charts-with-panel {
-    grid-template-columns: 1fr 260px;
+    grid-template-columns: 1fr 320px;
   }
 
   .chart-info-panel {

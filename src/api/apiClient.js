@@ -49,12 +49,22 @@ class ApiClient {
       body = null,
       headers = {},
       skipAuth = false,
+      noCache = true, // Default to no cache for fresh data
     } = options;
 
-    const url = this.buildUrl(endpoint, params);
+    // Add cache-busting timestamp for GET requests
+    const requestParams = { ...params };
+    if (method === "GET" && noCache) {
+      requestParams._t = Date.now();
+    }
+
+    const url = this.buildUrl(endpoint, requestParams);
 
     const requestHeaders = {
       "Content-Type": "application/json",
+      // Prevent caching
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
       ...headers,
     };
 
@@ -68,6 +78,7 @@ class ApiClient {
       method,
       headers: requestHeaders,
       credentials: "include",
+      cache: "no-store", // Prevent browser cache
     };
 
     if (body && method !== "GET") {
@@ -101,7 +112,7 @@ class ApiClient {
       // Network or other errors
       throw new ApiError(
         error.message || "Network error. Please check your connection.",
-        0
+        0,
       );
     }
   }
@@ -112,7 +123,11 @@ class ApiClient {
   async parseErrorMessage(response) {
     try {
       const data = await response.json();
-      return data.message || data.error || `Request failed with status ${response.status}`;
+      return (
+        data.message ||
+        data.error ||
+        `Request failed with status ${response.status}`
+      );
     } catch {
       return `Request failed with status ${response.status}`;
     }
@@ -192,16 +207,188 @@ export const sessionApi = {
   /**
    * Fetch mini view data (session summaries)
    */
-  async getMiniView(limit = 200, range = "year") {
-    return apiClient.get(endpoints.miniView, { limit, range });
+  async getMiniView(range = "year", onProgress = null) {
+    return fetchAllDataAdaptive(endpoints.miniView, { range }, onProgress);
   },
 
   /**
    * Fetch EMS transactions
    */
-  async getEmsTransactions(limit = 200) {
-    return apiClient.get(endpoints.emsTransactions, { limit });
+  async getEmsTransactions(onProgress = null) {
+    return fetchAllDataAdaptive(endpoints.emsTransactions, {}, onProgress);
   },
 };
+
+/**
+ * Parse response data from different formats
+ */
+function parseResponseData(response) {
+  if (Array.isArray(response)) {
+    return response;
+  } else if (response.rows && Array.isArray(response.rows)) {
+    return response.rows;
+  } else if (response.data && Array.isArray(response.data)) {
+    return response.data;
+  }
+  return [];
+}
+
+/**
+ * Fetch all data by finding the max working limit
+ * API only works when limit <= actual record count
+ * Uses binary search after initial probe to minimize API calls
+ */
+// async function fetchAllDataAdaptive(endpoint, baseParams = {}, onProgress = null) {
+//   if (onProgress) onProgress("Loading...");
+
+//   // Step 1: Try 200 first
+//   let result = await tryFetchWithLimit(endpoint, baseParams, 200, onProgress);
+//   if (!result.success) {
+//     return [];
+//   }
+
+//   let lastGoodData = result.data;
+//   let lastGoodLimit = 200;
+
+//   // Step 2: Try 400
+//   result = await tryFetchWithLimit(endpoint, baseParams, 400, onProgress);
+//   if (result.success) {
+//     lastGoodData = result.data;
+//     lastGoodLimit = 400;
+
+//     // Step 3: Try 600
+//     result = await tryFetchWithLimit(endpoint, baseParams, 600, onProgress);
+//     if (result.success) {
+//       lastGoodData = result.data;
+//       lastGoodLimit = 600;
+
+//       // Continue with bigger jumps
+//       for (let limit = 800; limit <= 5000; limit += 200) {
+//         result = await tryFetchWithLimit(endpoint, baseParams, limit, onProgress);
+//         if (result.success) {
+//           lastGoodData = result.data;
+//           lastGoodLimit = limit;
+//         } else {
+//           break;
+//         }
+//       }
+//     }
+//   }
+
+//   // Step 4: Refine - try increments of 50 from lastGoodLimit
+//   for (let limit = lastGoodLimit + 50; limit < lastGoodLimit + 200; limit += 50) {
+//     result = await tryFetchWithLimit(endpoint, baseParams, limit, onProgress);
+//     if (result.success) {
+//       lastGoodData = result.data;
+//     } else {
+//       break;
+//     }
+//   }
+
+//   console.log(`✓ Fetched ${lastGoodData.length} records`);
+//   return lastGoodData;
+// }
+
+/**
+ * Fetch all data using cascading step-down refinement.
+ *
+ * Steps: [200, 100, 50, 40, 30, 20, 10, 5, 1]
+ * - If probe succeeds → advance lastGood, retry same step
+ * - If probe fails    → record ceiling, shrink step, retry from lastGood
+ * - Skip any probe that would hit/exceed a known ceiling (saves calls)
+ *
+ * Example for ~394 records:
+ *   step=200: 200✓ 400✗           → lastGood=200, ceil=400
+ *   step=100: 300✓ skip(400≥ceil) → lastGood=300
+ *   step= 50: 350✓ skip(400≥ceil) → lastGood=350
+ *   step= 40: 390✓ skip(430>ceil) → lastGood=390
+ *   step= 30: skip(420>ceil)
+ *   step= 20: skip(410>ceil)
+ *   step= 10: skip(400≥ceil)
+ *   step=  5: 395✗               → ceil=395
+ *   step=  1: 391✓ 392✓ 393✓ 394✓ skip(395≥ceil)
+ *   ✓ 394 records in ~10 API calls
+ */
+async function fetchAllDataAdaptive(
+  endpoint,
+  baseParams = {},
+  onProgress = null,
+) {
+  if (onProgress) onProgress("Loading...");
+
+  // const STEPS = [200, 100, 50, 40, 30, 20, 10, 5, 1];
+  const STEPS = [200, 100, 50];
+
+  // ── Initial probe ────────────────────────────────────────────────────────
+  const initial = await tryFetchWithLimit(
+    endpoint,
+    baseParams,
+    STEPS[0],
+    onProgress,
+  );
+  if (!initial.success) {
+    console.warn(
+      "Initial probe at 200 failed — dataset may be empty or API error.",
+    );
+    return [];
+  }
+
+  let lastGoodData = initial.data;
+  let lastGoodLimit = STEPS[0]; // 200
+  let ceilLimit = 500; // lowest known failing limit
+
+  // ── Cascading refinement ─────────────────────────────────────────────────
+  for (const step of STEPS) {
+    // Keep probing with this step until we hit the ceiling
+    while (true) {
+      const next = lastGoodLimit + step;
+
+      // Skip — we already know this limit (or higher) fails
+      if (next >= ceilLimit) break;
+
+      const result = await tryFetchWithLimit(
+        endpoint,
+        baseParams,
+        next,
+        onProgress,
+      );
+
+      if (result.success) {
+        lastGoodData = result.data;
+        lastGoodLimit = next;
+        // Continue with same step (maybe there's more room)
+      } else {
+        ceilLimit = next; // tighten the ceiling for all future steps too
+        break; // shrink step
+      }
+    }
+
+    // Once the gap is closed, no finer steps can help
+    if (ceilLimit - lastGoodLimit <= 1) break;
+  }
+
+  console.log(`✓ Fetched ${lastGoodData.length} records in exact mode`);
+  return lastGoodData;
+}
+
+/**
+ * Try to fetch with a specific limit, returns { success, data }
+ */
+async function tryFetchWithLimit(
+  endpoint,
+  baseParams,
+  limit,
+  onProgress = null,
+) {
+  try {
+    // if (onProgress) onProgress(`Trying ${limit}...`);
+    const params = { ...baseParams, limit, offset: 0 };
+    const response = await apiClient.get(endpoint, params);
+    const data = parseResponseData(response);
+    return { success: data.length > 0, data };
+  } catch {
+    return { success: false, data: [] };
+  }
+}
 
 export default apiClient;

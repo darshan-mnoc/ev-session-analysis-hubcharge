@@ -128,6 +128,20 @@ export const usePerformanceChartData = (filteredData) => {
           // Store actual end time for each session (for display in side panel)
           dataPoint[`endTime_${sessionIdx}`] = actualEndTime;
           dataPoint[`endTimeFormatted_${sessionIdx}`] = formatTimeMinSec(actualEndTime);
+          // Store time range from bucket label (e.g., "10:00-10:43")
+          dataPoint[`timeRange_${sessionIdx}`] = bucket.label || `${bucketIdx}:00-${formatTimeMinSec(actualEndTime)}`;
+          // Store total session duration
+          const totalDuration = session.duration_minutes ?? 0;
+          dataPoint[`totalDuration_${sessionIdx}`] = totalDuration;
+          dataPoint[`totalDurationFormatted_${sessionIdx}`] = formatTimeMinSec(totalDuration);
+          // Track if this is the last bucket of the session
+          dataPoint[`isLastBucket_${sessionIdx}`] = isLastBucket;
+          // Check if user stopped early: ONLY if this is the last bucket AND total duration > ceiling of actual end time
+          // e.g., duration=20, actualEndTime=10.72, isLastBucket=true → 20 > 11 → stopped early
+          // e.g., duration=10, actualEndTime=10.38, isLastBucket=true → 10 <= 11 → normal
+          // If not last bucket, stoppedEarly is always false (session still ongoing)
+          const stoppedEarly = isLastBucket && totalDuration > Math.ceil(actualEndTime);
+          dataPoint[`stoppedEarly_${sessionIdx}`] = stoppedEarly;
         });
       });
 
@@ -207,6 +221,18 @@ export const usePerformanceChartData = (filteredData) => {
             // Store actual end time for each session
             dataPoint[`endTime_${idx}`] = actualEndTime;
             dataPoint[`endTimeFormatted_${idx}`] = formatTimeMinSec(actualEndTime);
+            // Store time range from bucket label
+            const bucket = session.buckets[bucketIdx];
+            dataPoint[`timeRange_${idx}`] = bucket.label || `${bucketIdx}:00-${formatTimeMinSec(actualEndTime)}`;
+            // Store total session duration
+            const totalDuration = session.duration_minutes ?? 0;
+            dataPoint[`totalDuration_${idx}`] = totalDuration;
+            dataPoint[`totalDurationFormatted_${idx}`] = formatTimeMinSec(totalDuration);
+            // Track if this is the last bucket of the session
+            dataPoint[`isLastBucket_${idx}`] = isLastBucket;
+            // Check if user stopped early: ONLY if this is the last bucket
+            const stoppedEarly = isLastBucket && totalDuration > Math.ceil(actualEndTime);
+            dataPoint[`stoppedEarly_${idx}`] = stoppedEarly;
           }
         });
 

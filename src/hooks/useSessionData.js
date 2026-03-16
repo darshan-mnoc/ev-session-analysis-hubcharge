@@ -37,10 +37,14 @@ export const useSessionData = () => {
   /**
    * Process and merge session data with EMS transactions
    */
-  const processSessionData = useCallback((miniViewData, emsArray) => {
+  const processSessionData = useCallback((miniViewArray, emsArray) => {
     // Filter sessions >= 10 minutes with minimum cost
-    const filteredSessions = miniViewData.rows.filter(
-      (row) => parseInt(row.duration_minutes) >= 10 && row.final_cost >= 12.5
+    const filteredSessions = miniViewArray.filter(
+      (row) =>
+        parseInt(row.duration_minutes) >= 10 &&
+        row.final_cost >= 12.5 &&
+        row.is_refunded !== true &&
+        row.session_id !== "8c9fe7d1-65ee-426b-bf01-869d418fa9f5", // Exclude known outlier session
     );
 
     // Create EMS lookup map
@@ -58,7 +62,8 @@ export const useSessionData = () => {
         const machineInfo = getMachineInfo(session.cpid, session.connector_id);
 
         // Calculate SOC values
-        const socStart = session.soc_start || ems?.summary?.startSocPercent || 0;
+        const socStart =
+          session.soc_start || ems?.summary?.startSocPercent || 0;
         const socEnd = session.soc_end || ems?.summary?.endSocPercent || 0;
         const socGain = socEnd - socStart;
 
@@ -75,17 +80,30 @@ export const useSessionData = () => {
         let avgVoltage = 0;
         let avgCurrent = 0;
         if (buckets.length > 0) {
-          avgVoltage = buckets.reduce((sum, b) => sum + (b.avgVoltageV || 0), 0) / buckets.length;
-          avgCurrent = buckets.reduce((sum, b) => sum + (b.avgCurrentA || 0), 0) / buckets.length;
+          avgVoltage =
+            buckets.reduce((sum, b) => sum + (b.avgVoltageV || 0), 0) /
+            buckets.length;
+          avgCurrent =
+            buckets.reduce((sum, b) => sum + (b.avgCurrentA || 0), 0) /
+            buckets.length;
         }
 
         // Calculate voltage architecture
-        const voltageArch = calculateVoltageArch(buckets, session.cpid, averageKw);
+        const voltageArch = calculateVoltageArch(
+          buckets,
+          session.cpid,
+          averageKw,
+        );
 
         // Calculate 10-min metrics
         const kwh10Min = calculateKwh10Min(buckets, durationMin, totalKwh);
         const kw10Min = calculateKw10Min(buckets, durationMin, averageKw);
-        const soc10MinGain = calculateSoc10MinGain(buckets, durationMin, socStart, socEnd);
+        const soc10MinGain = calculateSoc10MinGain(
+          buckets,
+          durationMin,
+          socStart,
+          socEnd,
+        );
 
         // Calculate SOC at 10 min
         const first10Buckets = buckets.slice(0, 10);
@@ -96,7 +114,9 @@ export const useSessionData = () => {
           soc10MinEnd = socEnd;
         } else if (first10Buckets.length > 0) {
           soc10MinStart = first10Buckets[0]?.socPercent || socStart;
-          soc10MinEnd = first10Buckets[first10Buckets.length - 1]?.socPercent || soc10MinStart;
+          soc10MinEnd =
+            first10Buckets[first10Buckets.length - 1]?.socPercent ||
+            soc10MinStart;
         }
 
         return {
@@ -117,7 +137,10 @@ export const useSessionData = () => {
           average_kw: averageKw,
           final_cost: session.final_cost || 0,
           status: session.status || "unknown",
-          ems_site: ems?.ems_site || session.ems_site || "hc-mbs (Without EMS Bucket Data)",
+          ems_site:
+            ems?.ems_site ||
+            session.ems_site ||
+            "hc-mbs (Without EMS Bucket Data)",
           start_time: session.start_time || ems?.ems_start_time_utc || "",
           end_time: session.end_time || ems?.ems_end_time_utc || "",
           participant_label: session.participant_label || "N/A",
@@ -134,15 +157,23 @@ export const useSessionData = () => {
           soc_10_min_gain: soc10MinGain,
           is_refunded: session.is_refunded,
           session_note: session.session_note || "",
+          stop_reason: session.stop_reason || "",
         };
       })
-      .filter((session) => !isNaN(session.soc_gain) && session.soc_gain !== null);
+      .filter(
+        (session) =>
+          !isNaN(session.soc_gain) &&
+          session.soc_gain !== null &&
+          !session.is_refunded,
+      );
 
     // Filter to only sessions with bucket data and sort by start time
     const sessionsWithBuckets = mergedSessions.filter(
-      (s) => s.buckets && s.buckets.length > 0
+      (s) => s.buckets && s.buckets.length > 0,
     );
-    sessionsWithBuckets.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+    sessionsWithBuckets.sort(
+      (a, b) => new Date(b.start_time) - new Date(a.start_time),
+    );
 
     return sessionsWithBuckets;
   }, []);
@@ -156,23 +187,31 @@ export const useSessionData = () => {
     setProgress(0);
 
     try {
-      // Step 1: Fetch mini_view data
+      // Step 1: Fetch mini_view data with adaptive limit
       setProgressStatus("Fetching session data...");
       setProgress(10);
-      const miniViewData = await sessionApi.getMiniView(200, "year");
-      setProgress(30);
 
-      // Step 2: Fetch EMS transactions
+      const miniViewData = await sessionApi.getMiniView("year", (status) => {
+        setProgressStatus(`Sessions: ${status}`);
+      });
+      setProgress(45);
+      console.log("Mini view sessions loaded:", miniViewData.length);
+
+      // Step 2: Fetch EMS transactions with adaptive limit
       setProgressStatus("Fetching EMS transactions...");
-      const emsData = await sessionApi.getEmsTransactions(200);
       setProgress(50);
 
-      const emsArray = emsData.rows || emsData || [];
+      const emsData = await sessionApi.getEmsTransactions((status) => {
+        setProgressStatus(`EMS: ${status}`);
+      });
+      setProgress(80);
+
+      const emsArray = Array.isArray(emsData) ? emsData : [];
       console.log("EMS transactions loaded:", emsArray.length);
 
       // Step 3: Process and merge data
-      setProgressStatus("Processing and categorizing data...");
-      setProgress(70);
+      setProgressStatus("Processing data...");
+      setProgress(85);
       const processedData = processSessionData(miniViewData, emsArray);
 
       setProgress(100);
@@ -189,9 +228,14 @@ export const useSessionData = () => {
   }, [processSessionData]);
 
   /**
-   * Refresh data
+   * Refresh data - clears old data and fetches fresh
    */
   const refreshData = useCallback(() => {
+    // Clear existing data to ensure fresh fetch
+    setData([]);
+    // Mark as fetched to prevent useEffect from also triggering
+    hasFetchedRef.current = true;
+    // Fetch new data
     fetchData();
   }, [fetchData]);
 
@@ -224,8 +268,6 @@ export const useFilteredData = (data, filters, rangeFilters) => {
     socFilter,
     extensionMin,
     extensionMax,
-    refundFilter,
-    includeRefunded,
     startDate,
     endDate,
   } = rangeFilters;
@@ -233,12 +275,26 @@ export const useFilteredData = (data, filters, rangeFilters) => {
   return useMemo(() => {
     return data.filter((session) => {
       // Basic filters
-      if (filters.site !== "all" && session.ems_site !== filters.site) return false;
-      if (filters.machineType !== "all" && session.machine_type !== filters.machineType) return false;
-      if (filters.connectorType !== "all" && session.connector_type !== filters.connectorType) return false;
+      if (filters.site !== "all" && session.ems_site !== filters.site)
+        return false;
+      if (
+        filters.machineType !== "all" &&
+        session.machine_type !== filters.machineType
+      )
+        return false;
+      if (
+        filters.connectorType !== "all" &&
+        session.connector_type !== filters.connectorType
+      )
+        return false;
       if (filters.cpid !== "all" && session.cpid !== filters.cpid) return false;
-      if (filters.status !== "all" && session.status !== filters.status) return false;
-      if (filters.voltageArch !== "all" && session.voltage_arch !== filters.voltageArch) return false;
+      if (filters.status !== "all" && session.status !== filters.status)
+        return false;
+      if (
+        filters.voltageArch !== "all" &&
+        session.voltage_arch !== filters.voltageArch
+      )
+        return false;
 
       // Duration filter
       const sessionMins = session.duration_minutes || 0;
@@ -249,7 +305,8 @@ export const useFilteredData = (data, filters, rangeFilters) => {
       if (priceFilter !== "all") {
         const sessionPrice = session.final_cost || 0;
         const filterPrice = Number(priceFilter);
-        if (Number(sessionPrice.toFixed(2)) !== Number(filterPrice.toFixed(2))) return false;
+        if (Number(sessionPrice.toFixed(2)) !== Number(filterPrice.toFixed(2)))
+          return false;
       }
 
       // SOC filter
@@ -260,20 +317,16 @@ export const useFilteredData = (data, filters, rangeFilters) => {
 
       // Extension filter
       const sessionExtensions = session.extension_count || 0;
-      if (extensionMin !== "" && sessionExtensions < Number(extensionMin)) return false;
-      if (extensionMax !== "" && sessionExtensions > Number(extensionMax)) return false;
-
-      // Refund filter
-      const isRefunded = session.is_refunded;
-      if (refundFilter === "all") {
-        if (!isRefunded) return false;
-      } else {
-        if (!includeRefunded && isRefunded) return false;
-      }
+      if (extensionMin !== "" && sessionExtensions < Number(extensionMin))
+        return false;
+      if (extensionMax !== "" && sessionExtensions > Number(extensionMax))
+        return false;
 
       // Date range filter
       if (startDate || endDate) {
-        const sessionDate = session.start_time ? new Date(session.start_time) : null;
+        const sessionDate = session.start_time
+          ? new Date(session.start_time)
+          : null;
         if (!sessionDate) return false;
 
         if (startDate) {
@@ -301,7 +354,18 @@ export const useFilteredData = (data, filters, rangeFilters) => {
 
       return true;
     });
-  }, [data, filters, durationMin, durationMax, priceFilter, socFilter, extensionMin, extensionMax, refundFilter, includeRefunded, startDate, endDate]);
+  }, [
+    data,
+    filters,
+    durationMin,
+    durationMax,
+    priceFilter,
+    socFilter,
+    extensionMin,
+    extensionMax,
+    startDate,
+    endDate,
+  ]);
 };
 
 export default useSessionData;

@@ -52,6 +52,8 @@ function App() {
   const { data, loading, progress, progressStatus, refreshData } =
     useSessionData();
 
+  // console.log("Raw session data loaded:", data, "sessions");
+
   // Filter states
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [rangeFilters, setRangeFilters] = useState({
@@ -61,8 +63,6 @@ function App() {
     socFilter: "all",
     extensionMin: "",
     extensionMax: "",
-    refundFilter: "default",
-    includeRefunded: false,
     startDate: "",
     endDate: "",
   });
@@ -136,8 +136,6 @@ function App() {
       socFilter: "all",
       extensionMin: "",
       extensionMax: "",
-      refundFilter: "default",
-      includeRefunded: false,
       startDate: "",
       endDate: "",
     });
@@ -332,7 +330,7 @@ function App() {
                   const chartData = getChartData(
                     chartKey,
                     chartYAxis,
-                    chartXAxis
+                    chartXAxis,
                   );
                   const unit = getYAxisUnit(chartYAxis);
                   const accentColor =
@@ -356,7 +354,7 @@ function App() {
                             prev?.[xAxisKey] === d?.[xAxisKey] &&
                             prev?.chartLabel === d?.chartLabel
                               ? null
-                              : d
+                              : d,
                           )
                         }
                       />

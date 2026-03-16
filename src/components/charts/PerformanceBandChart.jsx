@@ -47,8 +47,13 @@ const PerformanceBandChart = ({
       const color = point[`color_${idx}`];
       const endTime = point[`endTime_${idx}`];
       const endTimeFormatted = point[`endTimeFormatted_${idx}`];
+      const timeRange = point[`timeRange_${idx}`];
+      const totalDuration = point[`totalDuration_${idx}`];
+      const totalDurationFormatted = point[`totalDurationFormatted_${idx}`];
+      const isLastBucket = point[`isLastBucket_${idx}`];
+      const stoppedEarly = point[`stoppedEarly_${idx}`];
       if (value != null && id != null) {
-        sessions.push({ id, value, color, endTime, endTimeFormatted });
+        sessions.push({ id, value, color, endTime, endTimeFormatted, timeRange, totalDuration, totalDurationFormatted, isLastBucket, stoppedEarly });
       }
     });
     return {
@@ -126,15 +131,23 @@ const PerformanceBandChart = ({
             if (label == null || !payload || payload.length === 0) return null;
             const pointData = payload[0]?.payload || {};
 
-            // Count valid sessions and collect values
+            // Count valid sessions and collect values + time ranges
             let carCount = 0;
             const values = [];
+            const endTimes = [];
+            const timeRanges = [];
             Object.keys(pointData).forEach((key) => {
               if (key.startsWith("session_")) {
                 const idx = key.replace("session_", "");
                 if (pointData[key] != null && pointData[`id_${idx}`] != null) {
                   carCount++;
                   values.push(pointData[key]);
+                  if (pointData[`endTime_${idx}`] != null) {
+                    endTimes.push(pointData[`endTime_${idx}`]);
+                  }
+                  if (pointData[`timeRange_${idx}`]) {
+                    timeRanges.push(pointData[`timeRange_${idx}`]);
+                  }
                 }
               }
             });
@@ -155,12 +168,31 @@ const PerformanceBandChart = ({
                 (pointData.band_outer_delta ?? 0) || max;
             const xLabel = xAxisKey === "soc" ? `${label}%` : `${label} min`;
 
+            // Calculate time range span for time-based charts
+            const minEndTime = endTimes.length > 0 ? Math.min(...endTimes) : null;
+            const maxEndTime = endTimes.length > 0 ? Math.max(...endTimes) : null;
+            const formatTime = (t) => {
+              const mins = Math.floor(t);
+              const secs = Math.round((t - mins) * 60);
+              return `${mins}:${secs.toString().padStart(2, "0")}`;
+            };
+            const timeRangeLabel = minEndTime !== null && xAxisKey !== "soc"
+              ? minEndTime === maxEndTime
+                ? formatTime(minEndTime)
+                : `${formatTime(minEndTime)} - ${formatTime(maxEndTime)}`
+              : null;
+
             return (
               <div className="chart-tooltip-enhanced">
                 <div className="tooltip-header-row">
                   <span className="tooltip-x-label">{xLabel}</span>
                   <span className="tooltip-car-count">{carCount} sessions</span>
                 </div>
+                {timeRangeLabel && (
+                  <div className="tooltip-time-range">
+                    <span className="time-range-label">End times: {timeRangeLabel}</span>
+                  </div>
+                )}
                 <div className="tooltip-main-stats">
                   <div className="tooltip-stat">
                     <span className="stat-label">Avg</span>

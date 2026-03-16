@@ -21,8 +21,6 @@ const FiltersSection = ({
     socFilter,
     extensionMin,
     extensionMax,
-    refundFilter,
-    includeRefunded,
     startDate,
     endDate,
   } = rangeFilters;
@@ -392,43 +390,6 @@ const FiltersSection = ({
           </div>
         </div>
 
-        {/* Refund filter */}
-        <div
-          className={`filter-group refund-filter ${refundFilter !== "default" || includeRefunded ? "active" : ""}`}
-        >
-          <label>Refund</label>
-          <div className="refund-controls">
-            <select
-              value={refundFilter}
-              onChange={(e) =>
-                onRangeFilterChange("refundFilter", e.target.value)
-              }
-            >
-              <option value="default">Default</option>
-              <option value="all">All Refunded</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Include refunded checkbox */}
-        <div
-          className={`filter-group refund-filter ${refundFilter !== "default" || includeRefunded ? "active" : ""}`}
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-          }}
-        >
-          <label className="refund-include-label">
-            <input
-              type="checkbox"
-              checked={includeRefunded}
-              onChange={(e) =>
-                onRangeFilterChange("includeRefunded", e.target.checked)
-              }
-            />
-            <span style={{ marginLeft: "5px" }}>Include Refunded Sessions</span>
-          </label>
-        </div>
       </div>
     </section>
   );

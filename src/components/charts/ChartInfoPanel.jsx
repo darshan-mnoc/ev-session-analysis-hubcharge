@@ -1,7 +1,7 @@
 /**
  * Chart Info Panel Component
  * Displays session details when hovering over chart points
- * With sortable columns for END TIME and value
+ * With sortable columns for DURATION, END TIME and value
  */
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -33,7 +33,10 @@ const SortIcon = ({ direction }) => (
 
 const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
   const [page, setPage] = useState(0);
-  const [sortConfig, setSortConfig] = useState({ key: "value", direction: "asc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "value",
+    direction: "asc",
+  });
 
   const data = lockedData ?? hoverData;
   const locked = !!lockedData;
@@ -70,6 +73,9 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
       if (key === "endTime") {
         aVal = a.endTime ?? 0;
         bVal = b.endTime ?? 0;
+      } else if (key === "duration") {
+        aVal = a.totalDuration ?? 0;
+        bVal = b.totalDuration ?? 0;
       } else {
         // Default: sort by value
         aVal = a.value ?? 0;
@@ -113,7 +119,7 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
   const totalPages = Math.ceil(sortedSessions.length / PANEL_PAGE_SIZE);
   const paged = sortedSessions.slice(
     page * PANEL_PAGE_SIZE,
-    (page + 1) * PANEL_PAGE_SIZE
+    (page + 1) * PANEL_PAGE_SIZE,
   );
 
   return (
@@ -143,14 +149,32 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
       <div className="cip-column-header">
         <span className="cip-col-car">CAR ID</span>
         {xAxisKey !== "soc" && (
-          <button
-            className={`cip-col-sort ${sortConfig.key === "endTime" ? "active" : ""}`}
-            onClick={() => handleSort("endTime")}
-            title="Sort by end time"
-          >
-            END TIME
-            <SortIcon direction={sortConfig.key === "endTime" ? sortConfig.direction : null} />
-          </button>
+          <>
+            <button
+              className={`cip-col-sort ${sortConfig.key === "duration" ? "active" : ""}`}
+              onClick={() => handleSort("duration")}
+              title="Sort by total session duration"
+            >
+              TOTAL
+              <SortIcon
+                direction={
+                  sortConfig.key === "duration" ? sortConfig.direction : null
+                }
+              />
+            </button>
+            <button
+              className={`cip-col-sort ${sortConfig.key === "endTime" ? "active" : ""}`}
+              onClick={() => handleSort("endTime")}
+              title="Sort by time at this point"
+            >
+              AT
+              <SortIcon
+                direction={
+                  sortConfig.key === "endTime" ? sortConfig.direction : null
+                }
+              />
+            </button>
+          </>
         )}
         <button
           className={`cip-col-sort cip-col-value ${sortConfig.key === "value" ? "active" : ""}`}
@@ -158,23 +182,41 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
           title="Sort by value"
         >
           {unit}
-          <SortIcon direction={sortConfig.key === "value" ? sortConfig.direction : null} />
+          <SortIcon
+            direction={sortConfig.key === "value" ? sortConfig.direction : null}
+          />
         </button>
       </div>
 
       {/* Session rows - sorted based on sortConfig */}
       <div className="cip-sessions-list">
         {paged.map((s, i) => (
-          <div key={i} className="cip-session-row">
+          <div key={i} className={`cip-session-row ${s.stoppedEarly ? "stopped-early" : ""}`}>
             <span className="cip-dot" style={{ background: s.color }} />
-            <span className="cip-id">{s.id}</span>
-            {xAxisKey !== "soc" && (
-              <span className="cip-time">{s.endTimeFormatted || "-"}</span>
-            )}
-            <span className="cip-val">
-              {s.value?.toFixed(1)}
-              <small> {unit}</small>
+            <span className="cip-id">
+              {s.id}
+              {s.stoppedEarly && (
+                <span className="cip-stopped-badge" title="User stopped early">
+                  ⏹
+                </span>
+              )}
+              {s.isLastBucket && !s.stoppedEarly && (
+                <span className="cip-ended-badge" title="Session ended normally">
+                  ✓
+                </span>
+              )}
             </span>
+            {xAxisKey !== "soc" && (
+              <>
+                <span className="cip-duration">
+                  {s.totalDurationFormatted || "-"}
+                </span>
+                <span className="cip-time" title={s.timeRange || ""}>
+                  {s.endTimeFormatted || "-"}
+                </span>
+              </>
+            )}
+            <span className="cip-val">{s.value?.toFixed(1)}</span>
           </div>
         ))}
       </div>

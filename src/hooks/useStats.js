@@ -116,16 +116,16 @@ export const useStats = (filteredData) => {
 
     // Machine + Voltage architecture combinations
     const sessionsMBS1_400V = sessionsMBS1.filter(
-      (s) => s.voltage_arch === "400V"
+      (s) => s.voltage_arch === "400V",
     );
     const sessionsMBS1_800V = sessionsMBS1.filter(
-      (s) => s.voltage_arch === "800V"
+      (s) => s.voltage_arch === "800V",
     );
     const sessionsMBS2_400V = sessionsMBS2.filter(
-      (s) => s.voltage_arch === "400V"
+      (s) => s.voltage_arch === "400V",
     );
     const sessionsMBS2_800V = sessionsMBS2.filter(
-      (s) => s.voltage_arch === "800V"
+      (s) => s.voltage_arch === "800V",
     );
 
     // Calculate all stats
@@ -150,17 +150,17 @@ export const useStats = (filteredData) => {
     // Extension stats
     const totalExtensions = filteredData.reduce(
       (sum, s) => sum + (s.extension_count || 0),
-      0
+      0,
     );
     const avgExtensions =
       filteredData.length > 0 ? totalExtensions / filteredData.length : 0;
     const totalBaseDuration = filteredData.reduce(
       (sum, s) => sum + (s.base_duration || 10),
-      0
+      0,
     );
     const totalExtensionMinutes = filteredData.reduce(
       (sum, s) => sum + (s.extension_minutes || 0),
-      0
+      0,
     );
 
     return {

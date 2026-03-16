@@ -103,7 +103,10 @@ export const processBuckets = (rawBuckets) => {
  */
 export const calculateVoltageArch = (buckets, cpid, averageKw) => {
   if (buckets.length > 0) {
-    const voltageSum = buckets.reduce((sum, b) => sum + (b.avgVoltageV || 0), 0);
+    const voltageSum = buckets.reduce(
+      (sum, b) => sum + (b.avgVoltageV || 0),
+      0,
+    );
     const avgVoltage = voltageSum / buckets.length;
     return avgVoltage > 600 ? "800V" : "400V";
   }
@@ -122,13 +125,23 @@ export const calculateKwh10Min = (buckets, durationMin, totalKwh) => {
   }
 
   if (duration > 10 && buckets.length > 0) {
-    const first10Buckets = buckets.slice(0, 11);
-    return first10Buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0) * (1 / 60), 0);
+    const first10Buckets = buckets.slice(0, 10);
+    // console.log(
+    //   `Calculating kWh for first 10 minutes using ${first10Buckets.length} buckets:`,
+    //   first10Buckets,
+    // );
+    return first10Buckets.reduce(
+      (sum, b) => sum + (b.avgPowerKw || 0) * (1 / 60),
+      0,
+    );
   }
 
   if (buckets.length > 0) {
     const availableBuckets = buckets.slice(0, Math.min(10, buckets.length));
-    return availableBuckets.reduce((sum, b) => sum + (b.avgPowerKw || 0) * (1 / 60), 0);
+    return availableBuckets.reduce(
+      (sum, b) => sum + (b.avgPowerKw || 0) * (1 / 60),
+      0,
+    );
   }
 
   return 0;
@@ -147,13 +160,19 @@ export const calculateKw10Min = (buckets, durationMin, averageKw) => {
   if (duration > 10 && buckets.length > 0) {
     const first10Buckets = buckets.slice(0, 10);
     if (first10Buckets.length === 0) return 0;
-    return first10Buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) / first10Buckets.length;
+    return (
+      first10Buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) /
+      first10Buckets.length
+    );
   }
 
   if (buckets.length > 0) {
     const availableBuckets = buckets.slice(0, Math.min(10, buckets.length));
     if (availableBuckets.length === 0) return 0;
-    return availableBuckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) / availableBuckets.length;
+    return (
+      availableBuckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) /
+      availableBuckets.length
+    );
   }
 
   return 0;
@@ -162,7 +181,12 @@ export const calculateKw10Min = (buckets, durationMin, averageKw) => {
 /**
  * Calculate SOC gain in first 10 minutes
  */
-export const calculateSoc10MinGain = (buckets, durationMin, socStart, socEnd) => {
+export const calculateSoc10MinGain = (
+  buckets,
+  durationMin,
+  socStart,
+  socEnd,
+) => {
   const duration = parseInt(durationMin);
 
   if (duration === 10) {
@@ -172,7 +196,8 @@ export const calculateSoc10MinGain = (buckets, durationMin, socStart, socEnd) =>
   const first10Buckets = buckets.slice(0, 10);
   if (first10Buckets.length > 0) {
     const soc10MinStart = first10Buckets[0]?.socPercent || socStart;
-    const soc10MinEnd = first10Buckets[first10Buckets.length - 1]?.socPercent || soc10MinStart;
+    const soc10MinEnd =
+      first10Buckets[first10Buckets.length - 1]?.socPercent || soc10MinStart;
     return soc10MinEnd - soc10MinStart;
   }
 
@@ -267,7 +292,7 @@ export const downloadCSV = (filteredData) => {
   link.setAttribute("href", url);
   link.setAttribute(
     "download",
-    `ev-sessions-${new Date().toISOString().split("T")[0]}.csv`
+    `ev-sessions-${new Date().toISOString().split("T")[0]}.csv`,
   );
   link.style.visibility = "hidden";
   document.body.appendChild(link);
