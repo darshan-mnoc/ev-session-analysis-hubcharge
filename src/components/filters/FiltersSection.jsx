@@ -23,6 +23,10 @@ const FiltersSection = ({
     extensionMax,
     startDate,
     endDate,
+    kwhMin,
+    kwhMax,
+    costPerKwhMin,
+    costPerKwhMax,
   } = rangeFilters;
 
   return (
@@ -381,6 +385,118 @@ const FiltersSection = ({
                 onClick={() => {
                   onRangeFilterChange("extensionMin", "");
                   onRangeFilterChange("extensionMax", "");
+                }}
+                title="Clear"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* kWh Range filter (Outlier) */}
+        <div
+          className={`filter-group range-filter ${kwhMin !== "" || kwhMax !== "" ? "active" : ""}`}
+        >
+          <label>kWh Range</label>
+          <div className="range-input-container">
+            <input
+              type="number"
+              min="0"
+              max="500"
+              step="0.1"
+              value={kwhMin}
+              placeholder="Min"
+              onChange={(e) =>
+                onRangeFilterChange(
+                  "kwhMin",
+                  e.target.value === ""
+                    ? ""
+                    : Math.max(0, Number(e.target.value))
+                )
+              }
+              className="range-input"
+            />
+            <span className="range-separator">&ndash;</span>
+            <input
+              type="number"
+              min="0"
+              max="500"
+              step="0.1"
+              value={kwhMax}
+              placeholder="Max"
+              onChange={(e) =>
+                onRangeFilterChange(
+                  "kwhMax",
+                  e.target.value === ""
+                    ? ""
+                    : Math.max(0, Number(e.target.value))
+                )
+              }
+              className="range-input"
+            />
+            {(kwhMin !== "" || kwhMax !== "") && (
+              <button
+                className="range-clear-btn"
+                onClick={() => {
+                  onRangeFilterChange("kwhMin", "");
+                  onRangeFilterChange("kwhMax", "");
+                }}
+                title="Clear"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* $/kWh Range filter (Outlier) */}
+        <div
+          className={`filter-group range-filter ${costPerKwhMin !== "" || costPerKwhMax !== "" ? "active" : ""}`}
+        >
+          <label>$/kWh Range</label>
+          <div className="range-input-container">
+            <input
+              type="number"
+              min="0"
+              max="10"
+              step="0.01"
+              value={costPerKwhMin}
+              placeholder="Min"
+              onChange={(e) =>
+                onRangeFilterChange(
+                  "costPerKwhMin",
+                  e.target.value === ""
+                    ? ""
+                    : Math.max(0, Number(e.target.value))
+                )
+              }
+              className="range-input"
+            />
+            <span className="range-separator">&ndash;</span>
+            <input
+              type="number"
+              min="0"
+              max="10"
+              step="0.01"
+              value={costPerKwhMax}
+              placeholder="Max"
+              onChange={(e) =>
+                onRangeFilterChange(
+                  "costPerKwhMax",
+                  e.target.value === ""
+                    ? ""
+                    : Math.max(0, Number(e.target.value))
+                )
+              }
+              className="range-input"
+            />
+            {(costPerKwhMin !== "" || costPerKwhMax !== "") && (
+              <button
+                className="range-clear-btn"
+                onClick={() => {
+                  onRangeFilterChange("costPerKwhMin", "");
+                  onRangeFilterChange("costPerKwhMax", "");
                 }}
                 title="Clear"
               >

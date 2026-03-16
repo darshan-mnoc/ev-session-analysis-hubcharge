@@ -65,6 +65,10 @@ function App() {
     extensionMax: "",
     startDate: "",
     endDate: "",
+    kwhMin: "",
+    kwhMax: "",
+    costPerKwhMin: "",
+    costPerKwhMax: "",
   });
 
   // UI states
@@ -138,6 +142,10 @@ function App() {
       extensionMax: "",
       startDate: "",
       endDate: "",
+      kwhMin: "",
+      kwhMax: "",
+      costPerKwhMin: "",
+      costPerKwhMax: "",
     });
   }, []);
 

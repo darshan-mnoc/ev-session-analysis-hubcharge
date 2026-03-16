@@ -44,7 +44,8 @@ export const useSessionData = () => {
         parseInt(row.duration_minutes) >= 10 &&
         row.final_cost >= 12.5 &&
         row.is_refunded !== true &&
-        row.session_id !== "8c9fe7d1-65ee-426b-bf01-869d418fa9f5", // Exclude known outlier session
+        row.session_id !== "45135982-e3d4-4807-b382-74f1b9222677" &&
+        row.session_id !== "8c9fe7d1-65ee-426b-bf01-869d418fa9f5",
     );
 
     // Create EMS lookup map
@@ -270,6 +271,10 @@ export const useFilteredData = (data, filters, rangeFilters) => {
     extensionMax,
     startDate,
     endDate,
+    kwhMin,
+    kwhMax,
+    costPerKwhMin,
+    costPerKwhMax,
   } = rangeFilters;
 
   return useMemo(() => {
@@ -342,6 +347,21 @@ export const useFilteredData = (data, filters, rangeFilters) => {
         }
       }
 
+      // kWh range filter (outlier filter)
+      const sessionKwh = session.total_kwh || 0;
+      if (kwhMin !== "" && sessionKwh < Number(kwhMin)) return false;
+      if (kwhMax !== "" && sessionKwh > Number(kwhMax)) return false;
+
+      // $/kWh range filter (outlier filter)
+      if (costPerKwhMin !== "" || costPerKwhMax !== "") {
+        const sessionCost = session.final_cost || 0;
+        const costPerKwh = sessionKwh > 0 ? sessionCost / sessionKwh : 0;
+        if (costPerKwhMin !== "" && costPerKwh < Number(costPerKwhMin))
+          return false;
+        if (costPerKwhMax !== "" && costPerKwh > Number(costPerKwhMax))
+          return false;
+      }
+
       // Search filter
       if (filters.search) {
         const search = filters.search.toLowerCase();
@@ -365,6 +385,10 @@ export const useFilteredData = (data, filters, rangeFilters) => {
     extensionMax,
     startDate,
     endDate,
+    kwhMin,
+    kwhMax,
+    costPerKwhMin,
+    costPerKwhMax,
   ]);
 };
 
