@@ -335,14 +335,14 @@ export const useFilteredData = (data, filters, rangeFilters) => {
         if (!sessionDate) return false;
 
         if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
+          // Parse as local time by appending T00:00:00
+          const start = new Date(startDate + "T00:00:00");
           if (sessionDate < start) return false;
         }
 
         if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
+          // Parse as local time and set to end of day
+          const end = new Date(endDate + "T23:59:59.999");
           if (sessionDate > end) return false;
         }
       }

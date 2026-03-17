@@ -114,7 +114,7 @@ const StatsDashboard = ({ stats }) => {
               <span className="arch-label accent">800V</span>
               <span className="value accent">{stats.avgKwh10Min800V} kWh</span>
               <span className="value accent">{stats.avgSocGain10Min800V}%</span>
-              <span className="value accent">{stats.avgPower800V} kW</span>
+              <span className="value accent">{stats.avgPower10Min800V} kW</span>
             </div>
           </div>
         </div>

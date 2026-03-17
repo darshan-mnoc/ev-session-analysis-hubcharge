@@ -8,63 +8,36 @@ export const useStats = (filteredData) => {
   return useMemo(() => {
     if (filteredData.length === 0) return null;
 
-    // Helper functions
+    console.log("Calculating stats for", filteredData.length, "sessions");
+
+    // Helper functions - use pre-calculated session values for consistency
     const avgKwh = (sessions) => {
-      let total = 0;
-      let count = 0;
-      sessions.forEach((s) => {
-        if (s.buckets && s.buckets.length > 0) {
-          const kwh =
-            s.buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) / 60;
-          if (kwh > 0) {
-            total += kwh;
-            count++;
-          }
-        } else if (s.total_kwh > 0) {
-          total += s.total_kwh;
-          count++;
-        }
-      });
-      return count ? total / count : 0;
+      const validSessions = sessions.filter((s) => s.total_kwh > 0);
+      if (validSessions.length === 0) return 0;
+      return (
+        validSessions.reduce((sum, s) => sum + s.total_kwh, 0) /
+        validSessions.length
+      );
     };
 
     const avgSocGainFn = (sessions) => {
-      let total = 0;
-      let count = 0;
-      sessions.forEach((s) => {
-        if (s.buckets && s.buckets.length > 0) {
-          const start = s.buckets[0]?.socPercent;
-          const end = s.buckets[s.buckets.length - 1]?.socPercent;
-          if (start != null && end != null) {
-            total += end - start;
-            count++;
-          }
-        } else if (!isNaN(s.soc_gain) && s.soc_gain !== null) {
-          total += s.soc_gain;
-          count++;
-        }
-      });
-      return count ? total / count : 0;
+      const validSessions = sessions.filter(
+        (s) => !isNaN(s.soc_gain) && s.soc_gain !== null,
+      );
+      if (validSessions.length === 0) return 0;
+      return (
+        validSessions.reduce((sum, s) => sum + s.soc_gain, 0) /
+        validSessions.length
+      );
     };
 
     const avgPowerFn = (sessions) => {
-      let total = 0;
-      let count = 0;
-      sessions.forEach((s) => {
-        if (s.buckets && s.buckets.length > 0) {
-          const avgKw =
-            s.buckets.reduce((sum, b) => sum + (b.avgPowerKw || 0), 0) /
-            s.buckets.length;
-          if (avgKw > 0) {
-            total += avgKw;
-            count++;
-          }
-        } else if (s.average_kw > 0) {
-          total += s.average_kw;
-          count++;
-        }
-      });
-      return count ? total / count : 0;
+      const validSessions = sessions.filter((s) => s.average_kw > 0);
+      if (validSessions.length === 0) return 0;
+      return (
+        validSessions.reduce((sum, s) => sum + s.average_kw, 0) /
+        validSessions.length
+      );
     };
 
     const avg10MinStats = (sessions, label = "") => {
@@ -77,6 +50,10 @@ export const useStats = (filteredData) => {
         const kwh = s.kwh_10_min || 0;
         const kw = s.kw_10_min || 0;
         const socGain = s.soc_10_min_gain || 0;
+
+        // console.log(
+        //   `Session ${s.session_id} (${label}): kWh 10min = ${kwh}, kW 10min = ${kw}, SOC gain 10min = ${socGain}`,
+        // );
 
         if (kwh > 0) {
           totalKwh += kwh;
@@ -137,6 +114,7 @@ export const useStats = (filteredData) => {
     const stats10All = avg10MinStats(filteredData);
     const stats10_400V = avg10MinStats(sessions400V, "400V");
     const stats10_800V = avg10MinStats(sessions800V, "800V");
+
     const stats10_MBS1 = avg10MinStats(sessionsMBS1, "MBS1");
     const stats10_MBS2 = avg10MinStats(sessionsMBS2, "MBS2");
 
