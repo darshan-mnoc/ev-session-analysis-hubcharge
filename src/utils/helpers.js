@@ -211,6 +211,7 @@ export const getYAxisUnit = (yAxis) => {
   const units = {
     kW: "kW",
     kWh: "kWh",
+    cost: "$/kWh",
     "$/kWh": "$/kWh",
     voltage: "V",
     current: "A",

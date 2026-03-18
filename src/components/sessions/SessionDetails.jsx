@@ -58,15 +58,26 @@ const SessionDetails = ({
       filteredBuckets = allData.slice(0, chartTimeRange);
     }
 
-    // Add cumulative kWh to each bucket
+    // Get actual session end time for $/kWh calculation
+    const actualEndTime = getActualEndTime(session.buckets) || session.duration_minutes || 1;
+
+    // Add cumulative kWh and $/kWh to each bucket
     let cumulativeKwh = 0;
     return filteredBuckets.map((bucket, index) => {
       const minuteKwh = (bucket.avgPowerKw || 0) * (1 / 60);
       cumulativeKwh += minuteKwh;
+
+      // Calculate $/kWh at this point
+      // currentTime = index + 1 (minute 1, 2, 3, etc.)
+      const currentTime = index + 1;
+      const costAtTime = (session.final_cost / actualEndTime) * currentTime;
+      const pricePerKwh = cumulativeKwh > 0 ? costAtTime / cumulativeKwh : 0;
+
       return {
         ...bucket,
         minuteKwh: +minuteKwh.toFixed(3),
         cumulativeKwh: +cumulativeKwh.toFixed(2),
+        pricePerKwh: +pricePerKwh.toFixed(2),
       };
     });
   }, [session, chartTimeRange]);
@@ -87,6 +98,19 @@ const SessionDetails = ({
       stoppedEarly,
     };
   }, [session]);
+
+  // Calculate 10-min $/kWh using correct formula
+  const tenMinPricePerKwh = useMemo(() => {
+    if (!session || !sessionEndInfo) return null;
+    if (session.kwh_10_min <= 0) return null;
+
+    const { actualEndTime } = sessionEndInfo;
+    // Cost at 10 min (or actual end if session is shorter)
+    const timeAt10 = Math.min(10, actualEndTime);
+    const costAt10 = (session.final_cost / actualEndTime) * timeAt10;
+
+    return costAt10 / session.kwh_10_min;
+  }, [session, sessionEndInfo]);
 
   if (!session) {
     return (
@@ -228,6 +252,14 @@ const SessionDetails = ({
             ${session.final_cost.toFixed(2)}
           </span>
         </div>
+        <div className="detail-item">
+          <span className="detail-label">$/kWh</span>
+          <span className="detail-value">
+            {session.total_kwh > 0
+              ? `$${(session.final_cost / session.total_kwh).toFixed(2)}`
+              : "N/A"}
+          </span>
+        </div>
       </div>
 
       {/* First 10 Min Inline */}
@@ -256,6 +288,14 @@ const SessionDetails = ({
           <span className="dh-label">10-Min SOC</span>
           <span className="dh-value">
             +{(session.soc_10_min_gain || 0).toFixed(0)}%
+          </span>
+        </div>
+        <div className="detail-highlight">
+          <span className="dh-label">10-Min $/kWh</span>
+          <span className="dh-value">
+            {tenMinPricePerKwh !== null
+              ? `$${tenMinPricePerKwh.toFixed(2)}`
+              : "N/A"}
           </span>
         </div>
         <div className="detail-highlight">

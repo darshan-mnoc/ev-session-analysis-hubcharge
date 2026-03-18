@@ -1491,7 +1491,7 @@ textarea {
 
 .machine-stat-row {
   display: grid;
-  grid-template-columns: 40px 1fr 28px;
+  grid-template-columns: 40px 1fr 1fr 28px;
   gap: 8px;
   align-items: center;
   padding: 6px 8px;
@@ -1524,6 +1524,18 @@ textarea {
 
 .stat-value.accent {
   color: var(--accent);
+}
+
+.stat-value-secondary {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value-secondary.accent {
+  color: var(--accent);
+  opacity: 0.85;
 }
 
 .session-mini {
@@ -1578,7 +1590,8 @@ textarea {
 
 .performance-chart-box .chart-container {
   flex: 1;
-  min-height: 0;
+  min-height: 280px;
+  position: relative;
 }
 
 .chart-box-header {
@@ -1958,6 +1971,23 @@ svg:focus {
   width: 55px;
 }
 
+.cip-col-kwh {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  width: 45px;
+  text-align: right;
+}
+
+.cip-kwh {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  width: 45px;
+  text-align: right;
+}
+
 .cip-sessions-list {
   display: flex;
   flex-direction: column;
@@ -2204,6 +2234,30 @@ svg:focus {
   color: var(--text-secondary);
   padding-top: 6px;
   border-top: 1px dashed var(--border);
+}
+
+/* Dual Y-Axis Tooltip Styles */
+.tooltip-dual-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.tooltip-stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.tooltip-stat-group .stat-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
 }
 
 /* ============================================================
@@ -2759,6 +2813,7 @@ svg:focus {
 }
 .tooltip-name {
   color: var(--text-secondary);
+  text-transform: capitalize;
 }
 .tooltip-value {
   color: var(--text-primary);
@@ -3149,6 +3204,16 @@ svg:focus {
     min-width: 180px;
   }
 
+  /* Dual Y-Axis tooltip responsive */
+  .tooltip-dual-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tooltip-stat-group {
+    min-width: 100%;
+  }
+
   .tooltip-header-row {
     margin-bottom: 10px;
     padding-bottom: 8px;
@@ -3280,7 +3345,7 @@ svg:focus {
   }
 
   .machine-stat-row {
-    grid-template-columns: 35px 1fr 24px;
+    grid-template-columns: 35px 1fr 1fr 24px;
     padding: 5px 6px;
   }
 

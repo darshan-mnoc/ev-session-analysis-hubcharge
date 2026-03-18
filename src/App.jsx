@@ -291,12 +291,19 @@ function App() {
                       <span className="selector-label">Y-Axis</span>
                       <select
                         value={chartYAxis}
-                        onChange={(e) => setChartYAxis(e.target.value)}
+                        onChange={(e) => {
+                          const newYAxis = e.target.value;
+                          setChartYAxis(newYAxis);
+                          // When cost is selected and X-axis is SOC, switch to time
+                          if (newYAxis === "cost" && chartXAxis === "soc") {
+                            setChartXAxis("minutes");
+                          }
+                        }}
                         className="chart-select"
                       >
                         <option value="kW">Power (kW)</option>
                         <option value="kWh">Energy (kWh)</option>
-                        <option value="$/kWh">Cost ($/kWh)</option>
+                        <option value="cost">Cost ($/kWh)</option>
                         <option value="voltage">Voltage (V)</option>
                         <option value="current">Current (A)</option>
                       </select>
@@ -309,7 +316,10 @@ function App() {
                         className="chart-select"
                       >
                         <option value="minutes">Time (min)</option>
-                        <option value="soc">SOC (%)</option>
+                        <option value="soc" disabled={chartYAxis === "cost"}>
+                          SOC (%)
+                        </option>
+                        {/* <option value="kwh">Energy (kWh)</option> */}
                       </select>
                     </div>
                     <div className="selector-group">
@@ -343,7 +353,20 @@ function App() {
                   const unit = getYAxisUnit(chartYAxis);
                   const accentColor =
                     kwChartView === "400V" ? "#22c55e" : "var(--accent)";
-                  const xAxisKey = chartXAxis === "soc" ? "soc" : "minute";
+                  const xAxisKey =
+                    chartXAxis === "soc"
+                      ? "soc"
+                      : chartXAxis === "kwh"
+                        ? "kwh"
+                        : "minute";
+                  const xAxisLabels = {
+                    minutes: "Minutes",
+                    soc: "SOC %",
+                    kwh: "kWh",
+                  };
+                  // Check if we're in cost mode with time x-axis (dual Y-axis mode)
+                  const isCostWithTime =
+                    chartYAxis === "cost" && chartXAxis === "minutes";
 
                   if (chartData.sessionCount > 0) {
                     return (
@@ -355,7 +378,7 @@ function App() {
                         colors={chartData.colors}
                         chartLabel={`${chartYAxis} · ${kwChartView} Architecture`}
                         xAxisKey={xAxisKey}
-                        xAxisLabel={chartXAxis === "soc" ? "SOC %" : "Minutes"}
+                        xAxisLabel={xAxisLabels[chartXAxis] || "Minutes"}
                         onHover={setChartInfoData}
                         onPointClick={(d) =>
                           setLockedChartInfo((prev) =>
@@ -365,6 +388,8 @@ function App() {
                               : d,
                           )
                         }
+                        dualYAxis={isCostWithTime}
+                        secondaryUnit="kWh"
                       />
                     );
                   }

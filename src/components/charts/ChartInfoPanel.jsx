@@ -41,6 +41,8 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
   const data = lockedData ?? hoverData;
   const locked = !!lockedData;
 
+  // console.log("custom data:", data);
+
   // Reset page when data changes
   useEffect(() => {
     setPage(0);
@@ -110,11 +112,24 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
     );
   }
 
-  const { minute, sessions = [], unit, chartLabel, xAxisKey } = data;
+  const {
+    minute,
+    sessions = [],
+    unit,
+    chartLabel,
+    xAxisKey,
+    dualYAxis,
+    kwh_average,
+  } = data;
 
   // Determine the x-axis value and label based on xAxisKey
   const xValue = data[xAxisKey] ?? minute;
-  const xLabel = xAxisKey === "soc" ? `${xValue}% SOC` : `Minute ${xValue}`;
+  const xLabel =
+    xAxisKey === "soc"
+      ? `${xValue}% SOC`
+      : xAxisKey === "kwh"
+        ? `${xValue} kWh`
+        : `Minute ${xValue}`;
 
   const totalPages = Math.ceil(sortedSessions.length / PANEL_PAGE_SIZE);
   const paged = sortedSessions.slice(
@@ -176,6 +191,11 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
             </button>
           </>
         )}
+        {dualYAxis && (
+          <span className="cip-col-kwh" style={{ color: "#3b82f6" }}>
+            kWh
+          </span>
+        )}
         <button
           className={`cip-col-sort cip-col-value ${sortConfig.key === "value" ? "active" : ""}`}
           onClick={() => handleSort("value")}
@@ -191,7 +211,10 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
       {/* Session rows - sorted based on sortConfig */}
       <div className="cip-sessions-list">
         {paged.map((s, i) => (
-          <div key={i} className={`cip-session-row ${s.stoppedEarly ? "stopped-early" : ""}`}>
+          <div
+            key={i}
+            className={`cip-session-row ${s.stoppedEarly ? "stopped-early" : ""}`}
+          >
             <span className="cip-dot" style={{ background: s.color }} />
             <span className="cip-id">
               {s.id}
@@ -201,7 +224,10 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
                 </span>
               )}
               {s.isLastBucket && !s.stoppedEarly && (
-                <span className="cip-ended-badge" title="Session ended normally">
+                <span
+                  className="cip-ended-badge"
+                  title="Session ended normally"
+                >
                   ✓
                 </span>
               )}
@@ -216,7 +242,14 @@ const ChartInfoPanel = ({ hoverData, lockedData, onUnlock }) => {
                 </span>
               </>
             )}
-            <span className="cip-val">{s.value?.toFixed(1)}</span>
+            {dualYAxis && (
+              <span className="cip-kwh" style={{ color: "#3b82f6" }}>
+                {s.kwh?.toFixed(2) || "-"}
+              </span>
+            )}
+            <span className="cip-val">
+              {dualYAxis ? `$${s.value?.toFixed(2)}` : s.value?.toFixed(1)}
+            </span>
           </div>
         ))}
       </div>

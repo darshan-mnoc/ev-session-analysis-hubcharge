@@ -55,7 +55,7 @@ const StatsDashboard = ({ stats }) => {
               </svg>
             </span>
             <span className="stat-label">
-              Performance by EV's Battery Architecture (Overall)
+              Full-Session Performance By EV Architechture
             </span>
           </div>
           <div className="stat-table">
@@ -94,7 +94,7 @@ const StatsDashboard = ({ stats }) => {
               </svg>
             </span>
             <span className="stat-label">
-              Performance by EV's Battery Architecture (10-Min Overall)
+              First 10-Minute Session Performance by EV Architecture
             </span>
           </div>
           <div className="stat-table">
@@ -181,16 +181,23 @@ const StatsDashboard = ({ stats }) => {
             </div>
             <span className="session-count">{stats.countMBS1} sessions</span>
           </div>
+
           <div className="machine-stats">
             <div className="machine-stat-row">
               <span className="arch-tag">400V</span>
               <span className="stat-value">{stats.avgKwhMBS1_400V} kWh</span>
+              <span className="stat-value-secondary">
+                {stats.avgPowerMBS1_400V} kW
+              </span>
               <span className="session-mini">{stats.countMBS1_400V}</span>
             </div>
             <div className="machine-stat-row">
               <span className="arch-tag accent">800V</span>
               <span className="stat-value accent">
                 {stats.avgKwhMBS1_800V} kWh
+              </span>
+              <span className="stat-value-secondary accent">
+                {stats.avgPowerMBS1_800V} kW
               </span>
               <span className="session-mini">{stats.countMBS1_800V}</span>
             </div>
@@ -221,12 +228,18 @@ const StatsDashboard = ({ stats }) => {
             <div className="machine-stat-row">
               <span className="arch-tag">400V</span>
               <span className="stat-value">{stats.avgKwhMBS2_400V} kWh</span>
+              <span className="stat-value-secondary">
+                {stats.avgPowerMBS2_400V} kW
+              </span>
               <span className="session-mini">{stats.countMBS2_400V}</span>
             </div>
             <div className="machine-stat-row">
               <span className="arch-tag accent">800V</span>
               <span className="stat-value accent">
                 {stats.avgKwhMBS2_800V} kWh
+              </span>
+              <span className="stat-value-secondary accent">
+                {stats.avgPowerMBS2_800V} kW
               </span>
               <span className="session-mini">{stats.countMBS2_800V}</span>
             </div>
