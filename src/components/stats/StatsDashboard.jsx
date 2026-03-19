@@ -4,6 +4,13 @@
  */
 
 import React from "react";
+import {
+  CarIcon,
+  EnergyIcon,
+  ClockIcon,
+  ChargerIcon,
+  BatteryIcon,
+} from "../common/Icons";
 
 const StatsDashboard = ({ stats }) => {
   if (!stats) return null;
@@ -16,15 +23,7 @@ const StatsDashboard = ({ stats }) => {
         <div className="stat-card primary">
           <div className="stat-header">
             <span className="stat-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
+              <CarIcon size={16} />
             </span>
             <span className="stat-label">Sessions</span>
           </div>
@@ -45,25 +44,24 @@ const StatsDashboard = ({ stats }) => {
         <div className="stat-card wide">
           <div className="stat-header">
             <span className="stat-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
+              <EnergyIcon size={16} />
             </span>
             <span className="stat-label">
-              Full-Session Performance By EV Architechture
+              Full-Session Performance By EV Architecture (Average)
             </span>
           </div>
           <div className="stat-table">
             <div className="stat-table-row header">
               <span></span>
-              <span>Avg Energy</span>
-              <span>Avg SOC Gain</span>
-              <span>Avg Power</span>
+              <span>
+                <EnergyIcon size={10} /> Energy
+              </span>
+              <span>
+                <BatteryIcon size={10} /> SOC
+              </span>
+              <span>
+                <EnergyIcon size={10} /> Power
+              </span>
             </div>
             <div className="stat-table-row">
               <span className="arch-label">400V</span>
@@ -83,26 +81,25 @@ const StatsDashboard = ({ stats }) => {
         {/* Architecture Performance - 10-Min */}
         <div className="stat-card wide">
           <div className="stat-header">
-            <span className="stat-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
+            <span className="stat-icon accent">
+              <EnergyIcon size={16} />
             </span>
             <span className="stat-label">
-              First 10-Minute Session Performance by EV Architecture
+              First 10-Minute Performance by Architecture (Average)
             </span>
           </div>
           <div className="stat-table">
             <div className="stat-table-row header">
               <span></span>
-              <span>Avg Energy</span>
-              <span>Avg SOC Gain</span>
-              <span>Avg Power</span>
+              <span>
+                <EnergyIcon size={10} /> Energy
+              </span>
+              <span>
+                <BatteryIcon size={10} /> SOC
+              </span>
+              <span>
+                <EnergyIcon size={10} /> Power
+              </span>
             </div>
             <div className="stat-table-row">
               <span className="arch-label">400V</span>
@@ -123,15 +120,7 @@ const StatsDashboard = ({ stats }) => {
         <div className="stat-card">
           <div className="stat-header">
             <span className="stat-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
+              <ClockIcon size={16} />
             </span>
             <span className="stat-label">Duration</span>
           </div>
@@ -166,15 +155,7 @@ const StatsDashboard = ({ stats }) => {
           <div className="stat-header">
             <div className="machine-name">
               <span className="stat-icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="4" y="4" width="16" height="16" rx="2" />
-                  <rect x="9" y="9" width="6" height="6" />
-                </svg>
+                <ChargerIcon size={16} />
               </span>
               <span>Winline</span>
               <span className="power-badge">160kW</span>
@@ -209,15 +190,7 @@ const StatsDashboard = ({ stats }) => {
           <div className="stat-header">
             <div className="machine-name">
               <span className="stat-icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="4" y="4" width="16" height="16" rx="2" />
-                  <rect x="9" y="9" width="6" height="6" />
-                </svg>
+                <ChargerIcon size={16} />
               </span>
               <span>Yotai</span>
               <span className="power-badge">180kW</span>

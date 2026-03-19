@@ -23,7 +23,7 @@ const LoginForm = () => {
     <div className="auth-loading">
       <div className="login-form-container">
         <img src={Logo} alt="HubCharge" className="login-logo" />
-        <h2>EV Session Dashboard</h2>
+        <h2>HubCharge Dashboard</h2>
         <p className="login-subtitle">Sign in to access analytics</p>
 
         {authError && <div className="login-error">{authError}</div>}

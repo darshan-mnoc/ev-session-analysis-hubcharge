@@ -4,6 +4,12 @@
  */
 
 import React from "react";
+import {
+  EnergyIcon,
+  ClockIcon,
+  BatteryIcon,
+  ChartIcon,
+} from "../common/Icons";
 
 const SessionCard = ({ session, isSelected, onClick }) => (
   <div
@@ -24,45 +30,27 @@ const SessionCard = ({ session, isSelected, onClick }) => (
 
     <div className="session-metrics">
       <div className="metric">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
+        <span className="metric-icon energy">
+          <EnergyIcon size={14} />
+        </span>
         <div>
           <span className="metric-value">{session.total_kwh.toFixed(1)}</span>
           <span className="metric-unit">kWh</span>
         </div>
       </div>
       <div className="metric">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
+        <span className="metric-icon time">
+          <ClockIcon size={14} />
+        </span>
         <div>
           <span className="metric-value">{session.duration_minutes}</span>
           <span className="metric-unit">min</span>
         </div>
       </div>
       <div className="metric">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M22 11h2v4h-2" />
-          <path d="M6 11v4" />
-        </svg>
+        <span className="metric-icon battery">
+          <BatteryIcon size={14} percent={session.soc_end} />
+        </span>
         <div>
           <span className="metric-value">
             {session.soc_start}&rarr;{session.soc_end}
@@ -74,17 +62,17 @@ const SessionCard = ({ session, isSelected, onClick }) => (
 
     {/* 10-min stats row */}
     <div className="session-10min-stats">
-      <div className="stat-10min">
-        <span className="stat-10min-label">10min kWh</span>
-        <span className="stat-10min-value">
-          {(session.kwh_10_min || 0).toFixed(2)}
-        </span>
+      <div className="stat-10min-item">
+        <EnergyIcon size={10} color="#f97316" />
+        <span className="stat-10min-value">{(session.kwh_10_min || 0).toFixed(1)}</span>
+        <span className="stat-10min-unit">kWh</span>
+        <span className="stat-10min-label">10 Min</span>
       </div>
-      <div className="stat-10min">
-        <span className="stat-10min-label">10min SOC</span>
-        <span className="stat-10min-value">
-          +{(session.soc_10_min_gain || 0).toFixed(0)}%
-        </span>
+      <div className="stat-10min-item">
+        <BatteryIcon size={10} color="#f97316" />
+        <span className="stat-10min-value">+{(session.soc_10_min_gain || 0).toFixed(0)}</span>
+        <span className="stat-10min-unit">%</span>
+        <span className="stat-10min-label">10 Min</span>
       </div>
     </div>
 
@@ -98,18 +86,7 @@ const SessionCard = ({ session, isSelected, onClick }) => (
       <span className="connector-badge">{session.connector_type}</span>
       {session.buckets && session.buckets.length > 0 && (
         <span className="chart-badge">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            width="12"
-            height="12"
-          >
-            <path d="M3 3v18h18" />
-            <path d="M18 9l-5 5-4-4-3 3" />
-          </svg>
-          Chart
+          <ChartIcon size={10} />
         </span>
       )}
     </div>

@@ -1,5 +1,5 @@
 /**
- * EV Session Dashboard - Main App Component
+ * HubCharge Dashboard - Main App Component
  *
  * This is a refactored, modular version of the dashboard.
  * Components, hooks, and utilities are organized in separate files.
@@ -195,7 +195,7 @@ function App() {
       {/* Header */}
       <header className="main-header">
         <div className="header-left">
-          <h2>EV Session Dashboard</h2>
+          <h2>HubCharge Dashboard</h2>
           <p className="header-subtitle">MBS Analytics</p>
         </div>
         <div className="header-right">

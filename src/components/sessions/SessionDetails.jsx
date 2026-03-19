@@ -6,6 +6,25 @@
 import React, { useMemo } from "react";
 import { TIME_RANGE_OPTIONS } from "../../constants/config";
 import { ChartCard } from "../charts";
+import {
+  UserIcon,
+  SiteIcon,
+  ChargerIcon,
+  ConnectorIcon,
+  CalendarIcon,
+  ClockIcon,
+  StopIcon,
+  ExtensionIcon,
+  StatusIcon,
+  BatteryIcon,
+  SocGainIcon,
+  EnergyIcon,
+  CostIcon,
+  VoltageIcon,
+  CurrentIcon,
+  NoteIcon,
+  ChartIcon,
+} from "../common/Icons";
 
 // Helper to format time as MM:SS
 const formatTimeMinSec = (minutes) => {
@@ -39,6 +58,13 @@ const getActualEndTime = (buckets) => {
   return bucketIndex + 1;
 };
 
+// Icon wrapper component for consistent styling
+const Icon = ({ children, color }) => (
+  <span className="detail-icon" style={{ color }}>
+    {children}
+  </span>
+);
+
 const SessionDetails = ({
   session,
   chartTimeRange,
@@ -59,7 +85,8 @@ const SessionDetails = ({
     }
 
     // Get actual session end time for $/kWh calculation
-    const actualEndTime = getActualEndTime(session.buckets) || session.duration_minutes || 1;
+    const actualEndTime =
+      getActualEndTime(session.buckets) || session.duration_minutes || 1;
 
     // Add cumulative kWh and $/kWh to each bucket
     let cumulativeKwh = 0;
@@ -68,7 +95,6 @@ const SessionDetails = ({
       cumulativeKwh += minuteKwh;
 
       // Calculate $/kWh at this point
-      // currentTime = index + 1 (minute 1, 2, 3, etc.)
       const currentTime = index + 1;
       const costAtTime = (session.final_cost / actualEndTime) * currentTime;
       const pricePerKwh = cumulativeKwh > 0 ? costAtTime / cumulativeKwh : 0;
@@ -105,7 +131,6 @@ const SessionDetails = ({
     if (session.kwh_10_min <= 0) return null;
 
     const { actualEndTime } = sessionEndInfo;
-    // Cost at 10 min (or actual end if session is shorter)
     const timeAt10 = Math.min(10, actualEndTime);
     const costAt10 = (session.final_cost / actualEndTime) * timeAt10;
 
@@ -115,15 +140,7 @@ const SessionDetails = ({
   if (!session) {
     return (
       <div className="chart-placeholder">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        >
-          <path d="M3 3v18h18" />
-          <path d="M18 9l-5 5-4-4-3 3" />
-        </svg>
+        <ChartIcon size={40} color="var(--text-muted)" />
         <h3>Select a Session</h3>
         <p>
           Click on any session card to view detailed analytics and charging
@@ -156,29 +173,59 @@ const SessionDetails = ({
       {/* Full Session Details */}
       <div className="session-detail-grid full">
         <div className="detail-item">
-          <span className="detail-label">User</span>
+          <span className="detail-label">
+            <Icon>
+              <UserIcon size={11} />
+            </Icon>{" "}
+            User
+          </span>
           <span className="detail-value">{session.participant_label}</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Site</span>
+          <span className="detail-label">
+            <Icon>
+              <SiteIcon size={11} />
+            </Icon>{" "}
+            Site
+          </span>
           <span className="detail-value">{session.ems_site}</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Machine Type</span>
+          <span className="detail-label">
+            <Icon>
+              <ChargerIcon size={11} />
+            </Icon>{" "}
+            Machine
+          </span>
           <span className="detail-value">{session.machine_type}</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Connector Type</span>
+          <span className="detail-label">
+            <Icon>
+              <ConnectorIcon size={11} />
+            </Icon>{" "}
+            Connector
+          </span>
           <span className="detail-value">{session.connector_type}</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Start Time</span>
+          <span className="detail-label">
+            <Icon>
+              <CalendarIcon size={11} />
+            </Icon>{" "}
+            Start
+          </span>
           <span className="detail-value">
             {new Date(session.start_time).toLocaleString()}
           </span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">End Time</span>
+          <span className="detail-label">
+            <Icon>
+              <CalendarIcon size={11} />
+            </Icon>{" "}
+            End
+          </span>
           <span className="detail-value">
             {session.end_time
               ? new Date(session.end_time).toLocaleString()
@@ -186,7 +233,12 @@ const SessionDetails = ({
           </span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Duration</span>
+          <span className="detail-label">
+            <Icon>
+              <ClockIcon size={11} />
+            </Icon>{" "}
+            Duration
+          </span>
           <span className="detail-value highlight">
             {session.duration_minutes} min
             {sessionEndInfo?.actualEndTimeFormatted && (
@@ -199,7 +251,12 @@ const SessionDetails = ({
         </div>
         {sessionEndInfo?.stoppedEarly && (
           <div className="detail-item">
-            <span className="detail-label">Stopped At</span>
+            <span className="detail-label">
+              <Icon>
+                <StopIcon size={11} />
+              </Icon>{" "}
+              Stopped
+            </span>
             <span className="detail-value stopped-early-value">
               {sessionEndInfo.actualEndTimeFormatted}
             </span>
@@ -207,53 +264,103 @@ const SessionDetails = ({
         )}
         {session.stop_reason && (
           <div className="detail-item">
-            <span className="detail-label">Stop Reason</span>
+            <span className="detail-label">
+              <Icon>
+                <StopIcon size={11} />
+              </Icon>{" "}
+              Stop Reason
+            </span>
             <span className="detail-value">{session.stop_reason}</span>
           </div>
         )}
         <div className="detail-item">
-          <span className="detail-label">Extensions</span>
+          <span className="detail-label">
+            <Icon>
+              <ExtensionIcon size={11} />
+            </Icon>{" "}
+            Extensions
+          </span>
           <span className="detail-value">
             {session.extension_count || 0}&times; (+
             {session.extension_minutes || 0} min)
           </span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Status</span>
+          <span className="detail-label">
+            <Icon>
+              <StatusIcon size={11} />
+            </Icon>{" "}
+            Status
+          </span>
           <span className="detail-value">{session.status}</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">SOC Start</span>
+          <span className="detail-label">
+            <Icon>
+              <BatteryIcon size={11} />
+            </Icon>{" "}
+            SOC Start
+          </span>
           <span className="detail-value">{session.soc_start}%</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">SOC End</span>
+          <span className="detail-label">
+            <Icon>
+              <BatteryIcon size={11} percent={100} />
+            </Icon>{" "}
+            SOC End
+          </span>
           <span className="detail-value">{session.soc_end}%</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">SOC Gain</span>
+          <span className="detail-label">
+            <Icon>
+              <SocGainIcon size={11} />
+            </Icon>{" "}
+            SOC Gain
+          </span>
           <span className="detail-value highlight">{session.soc_gain}%</span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Total Energy</span>
+          <span className="detail-label">
+            <Icon color="#22c55e">
+              <EnergyIcon size={11} />
+            </Icon>{" "}
+            Energy
+          </span>
           <span className="detail-value highlight">
             {session.total_kwh.toFixed(2)} kWh
           </span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Avg Power</span>
+          <span className="detail-label">
+            <Icon color="#f97316">
+              <EnergyIcon size={11} />
+            </Icon>{" "}
+            Avg Power
+          </span>
           <span className="detail-value">
             {session.average_kw.toFixed(2)} kW
           </span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">Cost</span>
+          <span className="detail-label">
+            <Icon color="#eab308">
+              <CostIcon size={11} />
+            </Icon>{" "}
+            Cost
+          </span>
           <span className="detail-value highlight">
             ${session.final_cost.toFixed(2)}
           </span>
         </div>
         <div className="detail-item">
-          <span className="detail-label">$/kWh</span>
+          <span className="detail-label">
+            <Icon color="#eab308">
+              <CostIcon size={11} />
+            </Icon>{" "}
+            $/kWh
+          </span>
           <span className="detail-value">
             {session.total_kwh > 0
               ? `$${(session.final_cost / session.total_kwh).toFixed(2)}`
@@ -262,10 +369,12 @@ const SessionDetails = ({
         </div>
       </div>
 
-      {/* First 10 Min Inline */}
-      <div className="detail-highlight-row">
+      {/* First 10 Min Highlights */}
+      <div className="detail-highlight-row spaced">
         <div className="detail-highlight">
-          <span className="dh-label">Architecture</span>
+          <span className="dh-label">
+            <EnergyIcon size={10} /> Arch
+          </span>
           <span
             className={`dh-value ${session.voltage_arch === "800V" ? "accent" : ""}`}
           >
@@ -273,25 +382,33 @@ const SessionDetails = ({
           </span>
         </div>
         <div className="detail-highlight">
-          <span className="dh-label">10-Min Energy</span>
+          <span className="dh-label">
+            <EnergyIcon size={10} color="#22c55e" /> 10 Min Energy
+          </span>
           <span className="dh-value accent">
             {(session.kwh_10_min || 0).toFixed(2)} kWh
           </span>
         </div>
         <div className="detail-highlight">
-          <span className="dh-label">10-Min Power</span>
+          <span className="dh-label">
+            <EnergyIcon size={10} color="#f97316" /> 10 Min Power
+          </span>
           <span className="dh-value accent">
             {(session.kw_10_min || 0).toFixed(2)} kW
           </span>
         </div>
         <div className="detail-highlight">
-          <span className="dh-label">10-Min SOC</span>
+          <span className="dh-label">
+            <BatteryIcon size={10} /> 10 Min SOC
+          </span>
           <span className="dh-value">
             +{(session.soc_10_min_gain || 0).toFixed(0)}%
           </span>
         </div>
         <div className="detail-highlight">
-          <span className="dh-label">10-Min $/kWh</span>
+          <span className="dh-label">
+            <CostIcon size={10} color="#eab308" /> 10 Min $/kWh
+          </span>
           <span className="dh-value">
             {tenMinPricePerKwh !== null
               ? `$${tenMinPricePerKwh.toFixed(2)}`
@@ -299,29 +416,42 @@ const SessionDetails = ({
           </span>
         </div>
         <div className="detail-highlight">
-          <span className="dh-label">Avg Voltage</span>
+          <span className="dh-label">
+            <EnergyIcon size={10} /> Avg V
+          </span>
           <span className="dh-value">
             {(session.avg_voltage || 0).toFixed(0)}V
           </span>
         </div>
         <div className="detail-highlight">
-          <span className="dh-label">Avg Current</span>
+          <span className="dh-label">
+            <CurrentIcon size={10} /> Avg A
+          </span>
           <span className="dh-value">
             {(session.avg_current || 0).toFixed(1)}A
           </span>
         </div>
       </div>
 
-      <div className="detail-highlight-row">
-        <div className="detail-item">
-          <span className="detail-label">Session Note</span>
-          <span className="detail-value">{session.session_note}</span>
+      {session.session_note && (
+        <div className="detail-highlight-row">
+          <div className="detail-item full-width">
+            <span className="detail-label">
+              <Icon>
+                <NoteIcon size={11} />
+              </Icon>{" "}
+              Note
+            </span>
+            <span className="detail-value">{session.session_note}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Time Range Filter */}
       <div className="time-range-filter">
-        <label>Chart Time Range:</label>
+        <label>
+          <ClockIcon size={12} /> Chart Range:
+        </label>
         <div className="time-range-buttons">
           {TIME_RANGE_OPTIONS.map((option) => (
             <button

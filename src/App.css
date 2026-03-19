@@ -942,13 +942,24 @@ textarea {
 .price-filter label,
 .soc-filter label,
 .refund-filter label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 10px;
   font-weight: 500;
   color: var(--text-muted);
   margin-bottom: 5px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.filter-group label svg,
+.range-filter label svg,
+.date-filter label svg,
+.price-filter label svg,
+.soc-filter label svg {
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .filter-group select {
@@ -1391,10 +1402,17 @@ textarea {
 }
 
 .stat-table-row.header span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 10px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
+
+.stat-table-row.header span svg {
+  flex-shrink: 0;
 }
 
 .stat-table-row.highlight {
@@ -1516,10 +1534,17 @@ textarea {
 }
 
 .stat-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+}
+
+.stat-value svg {
+  flex-shrink: 0;
 }
 
 .stat-value.accent {
@@ -1527,10 +1552,17 @@ textarea {
 }
 
 .stat-value-secondary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+.stat-value-secondary svg {
+  flex-shrink: 0;
 }
 
 .stat-value-secondary.accent {
@@ -1911,6 +1943,9 @@ svg:focus {
   font-family: var(--font-mono);
 }
 .cip-car-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   color: var(--accent);
   font-weight: 600;
@@ -1972,12 +2007,19 @@ svg:focus {
 }
 
 .cip-col-kwh {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  width: 45px;
-  text-align: right;
+  width: 50px;
+}
+
+.cip-col-kwh svg {
+  flex-shrink: 0;
 }
 
 .cip-kwh {
@@ -2303,29 +2345,45 @@ svg:focus {
 /* ── Session Card ──────────────────────────────────────── */
 .session-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius-lg);
   padding: 13px;
   cursor: pointer;
   transition: all var(--transition);
   animation: fadeIn 0.2s ease;
+  position: relative;
+}
+
+.session-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  pointer-events: none;
+  transition: border-color var(--transition);
 }
 
 .session-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
   background: var(--bg-surface);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+}
+
+.session-card:hover::before {
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .session-card.selected {
-  border-color: var(--accent);
   background: linear-gradient(
     135deg,
-    rgba(249, 115, 22, 0.07) 0%,
+    rgba(249, 115, 22, 0.06) 0%,
     var(--bg-card) 100%
   );
-  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+.session-card.selected::before {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.15);
 }
 
 .session-card-header {
@@ -2349,19 +2407,19 @@ svg:focus {
 }
 
 .status-pill {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 3px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-muted);
 }
 
 .status-pill.completed {
-  background: rgba(34, 197, 94, 0.12);
-  color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
 }
 
 .session-time {
@@ -2382,10 +2440,29 @@ svg:focus {
   align-items: center;
   gap: 5px;
 }
-.metric svg {
-  width: 12px;
-  height: 12px;
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.metric-icon.energy {
+  color: #22c55e;
+}
+.metric-icon.time {
   color: var(--text-muted);
+}
+.metric-icon.battery {
+  color: var(--text-muted);
+}
+
+.metric svg {
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
@@ -2403,30 +2480,39 @@ svg:focus {
 
 .session-10min-stats {
   display: flex;
-  gap: 12px;
+  gap: 20px;
   padding-top: 8px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
   margin-bottom: 8px;
 }
 
-.stat-10min {
+.stat-10min-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.stat-10min-label {
-  display: block;
-  font-size: 9px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-bottom: 2px;
+.stat-10min-item svg {
+  flex-shrink: 0;
 }
 
 .stat-10min-value {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
+}
+
+.stat-10min-unit {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.stat-10min-label {
+  font-size: 9px;
+  color: var(--text-muted);
 }
 
 .session-card-footer {
@@ -2442,16 +2528,16 @@ svg:focus {
 .connector-badge,
 .chart-badge {
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 2px 6px;
   border-radius: 3px;
-  background: var(--bg-hover);
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .voltage-badge.v800 {
-  background: var(--accent-dim);
+  background: rgba(249, 115, 22, 0.08);
   color: var(--accent);
 }
 
@@ -2460,6 +2546,7 @@ svg:focus {
   align-items: center;
   gap: 3px;
   margin-left: auto;
+  color: var(--text-muted);
 }
 
 /* ── Pagination ────────────────────────────────────────── */
@@ -2634,12 +2721,29 @@ svg:focus {
 }
 
 .detail-label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 9px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 3px;
+}
+
+.detail-label svg {
+  flex-shrink: 0;
+}
+
+.detail-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.detail-icon svg {
+  width: 11px;
+  height: 11px;
 }
 
 .detail-value {
@@ -2680,6 +2784,11 @@ svg:focus {
   flex-wrap: wrap;
 }
 
+.detail-highlight-row.spaced {
+  justify-content: space-around;
+  gap: 15px;
+}
+
 .detail-highlight {
   display: flex;
   flex-direction: column;
@@ -2687,10 +2796,17 @@ svg:focus {
   min-width: 70px;
 }
 .dh-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 9px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
+
+.dh-label svg {
+  flex-shrink: 0;
 }
 
 .dh-value {
@@ -2710,12 +2826,19 @@ svg:focus {
 }
 
 .time-range-filter label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 9px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 7px;
+}
+
+.time-range-filter label svg {
+  width: 12px;
+  height: 12px;
 }
 
 .time-range-buttons {
@@ -2798,11 +2921,44 @@ svg:focus {
   border-bottom: 1px solid var(--border);
 }
 
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .tooltip-row {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
+}
+
+.tooltip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.tooltip-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.tooltip-icon.power {
+  color: #f97316;
+}
+.tooltip-icon.energy {
+  color: #22c55e;
+}
+.tooltip-icon.cost {
+  color: #eab308;
+}
+.tooltip-icon.battery {
+  color: var(--text-muted);
 }
 
 .tooltip-dot {
@@ -2962,7 +3118,7 @@ svg:focus {
   }
 
   .sessions-list {
-    max-height: 500px;
+    max-height: 1200px;
   }
 
   .chart-panel {

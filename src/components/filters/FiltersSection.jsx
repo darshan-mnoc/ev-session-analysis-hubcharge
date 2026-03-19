@@ -4,6 +4,17 @@
  */
 
 import React from "react";
+import {
+  SiteIcon,
+  ChargerIcon,
+  ConnectorIcon,
+  EnergyIcon,
+  CalendarIcon,
+  ClockIcon,
+  CostIcon,
+  BatteryIcon,
+  ExtensionIcon,
+} from "../common/Icons";
 
 const FiltersSection = ({
   filters,
@@ -49,65 +60,59 @@ const FiltersSection = ({
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span>Download CSV</span>
+            <span>CSV</span>
           </button>
           <button className="reset-filters-btn" onClick={onReset}>
-            Clear All
+            Clear
           </button>
         </div>
       </div>
       <div className="filters-grid">
         {/* Site filter */}
         <div className="filter-group">
-          <label>Site</label>
+          <label><SiteIcon size={11} /> Site</label>
           <select
             value={filters.site}
             onChange={(e) => onFilterChange("site", e.target.value)}
           >
             <option value="all">All Sites</option>
             {filterOptions.sites.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </div>
 
         {/* Machine filter */}
         <div className="filter-group">
-          <label>Machine</label>
+          <label><ChargerIcon size={11} /> Machine</label>
           <select
             value={filters.machineType}
             onChange={(e) => onFilterChange("machineType", e.target.value)}
           >
             <option value="all">All Machines</option>
             {filterOptions.machineTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
         </div>
 
         {/* Connector filter */}
         <div className="filter-group">
-          <label>Connector</label>
+          <label><ConnectorIcon size={11} /> Connector</label>
           <select
             value={filters.connectorType}
             onChange={(e) => onFilterChange("connectorType", e.target.value)}
           >
             <option value="all">All Connectors</option>
             {filterOptions.connectorTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
         </div>
 
         {/* Voltage architecture filter */}
         <div className="filter-group">
-          <label>EV Battery Architecture</label>
+          <label><EnergyIcon size={11} /> Architecture</label>
           <select
             value={filters.voltageArch}
             onChange={(e) => onFilterChange("voltageArch", e.target.value)}
@@ -119,10 +124,8 @@ const FiltersSection = ({
         </div>
 
         {/* Date Range filter */}
-        <div
-          className={`filter-group date-filter ${startDate || endDate ? "active" : ""}`}
-        >
-          <label>Date Range</label>
+        <div className={`filter-group date-filter ${startDate || endDate ? "active" : ""}`}>
+          <label><CalendarIcon size={11} /> Date Range</label>
           <div className="date-input-container">
             <input
               type="date"
@@ -155,10 +158,8 @@ const FiltersSection = ({
         </div>
 
         {/* Duration filter */}
-        <div
-          className={`filter-group range-filter ${durationMin !== "" || durationMax !== "" ? "active" : ""}`}
-        >
-          <label>Duration (min)</label>
+        <div className={`filter-group range-filter ${durationMin !== "" || durationMax !== "" ? "active" : ""}`}>
+          <label><ClockIcon size={11} /> Duration (min)</label>
           <div className="range-input-container">
             <input
               type="number"
@@ -167,12 +168,7 @@ const FiltersSection = ({
               value={durationMin}
               placeholder="Min"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "durationMin",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("durationMin", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -184,12 +180,7 @@ const FiltersSection = ({
               value={durationMax}
               placeholder="Max"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "durationMax",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("durationMax", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -209,16 +200,13 @@ const FiltersSection = ({
         </div>
 
         {/* Price filter */}
-        <div
-          className={`filter-group price-filter ${priceFilter !== "all" ? "active" : ""}`}
-        >
-          <label>Price Filter</label>
+        <div className={`filter-group price-filter ${priceFilter !== "all" ? "active" : ""}`}>
+          <label><CostIcon size={11} /> Price</label>
           <div className="price-input-container">
             <button
               className="price-btn decrement"
               onClick={() => {
-                const currentVal =
-                  priceFilter === "all" ? 12.5 : Number(priceFilter);
+                const currentVal = priceFilter === "all" ? 12.5 : Number(priceFilter);
                 const newVal = Math.max(0, currentVal - 0.5);
                 onRangeFilterChange("priceFilter", Number(newVal.toFixed(2)));
               }}
@@ -240,10 +228,7 @@ const FiltersSection = ({
                   if (inputVal === "") {
                     onRangeFilterChange("priceFilter", "all");
                   } else {
-                    const val = Math.min(
-                      100,
-                      Math.max(0, Number(inputVal) || 0)
-                    );
+                    const val = Math.min(100, Math.max(0, Number(inputVal) || 0));
                     onRangeFilterChange("priceFilter", Number(val.toFixed(2)));
                   }
                 }}
@@ -253,8 +238,7 @@ const FiltersSection = ({
             <button
               className="price-btn increment"
               onClick={() => {
-                const currentVal =
-                  priceFilter === "all" ? 12 : Number(priceFilter);
+                const currentVal = priceFilter === "all" ? 12 : Number(priceFilter);
                 const newVal = Math.min(100, currentVal + 0.5);
                 onRangeFilterChange("priceFilter", Number(newVal.toFixed(2)));
               }}
@@ -266,7 +250,7 @@ const FiltersSection = ({
               <button
                 className="price-btn clear"
                 onClick={() => onRangeFilterChange("priceFilter", "all")}
-                title="Clear price filter"
+                title="Clear"
               >
                 &times;
               </button>
@@ -275,16 +259,13 @@ const FiltersSection = ({
         </div>
 
         {/* SOC filter */}
-        <div
-          className={`filter-group soc-filter ${socFilter !== "all" ? "active" : ""}`}
-        >
-          <label>Max Start SOC (%)</label>
+        <div className={`filter-group soc-filter ${socFilter !== "all" ? "active" : ""}`}>
+          <label><BatteryIcon size={11} /> Max Start SOC</label>
           <div className="soc-input-container">
             <button
               className="soc-btn decrement"
               onClick={() => {
-                const currentVal =
-                  socFilter === "all" ? 30 : Number(socFilter);
+                const currentVal = socFilter === "all" ? 30 : Number(socFilter);
                 const newVal = Math.max(5, currentVal - 5);
                 onRangeFilterChange("socFilter", newVal);
               }}
@@ -305,10 +286,7 @@ const FiltersSection = ({
                   if (inputVal === "") {
                     onRangeFilterChange("socFilter", "all");
                   } else {
-                    const val = Math.min(
-                      100,
-                      Math.max(5, Number(inputVal) || 5)
-                    );
+                    const val = Math.min(100, Math.max(5, Number(inputVal) || 5));
                     onRangeFilterChange("socFilter", val);
                   }
                 }}
@@ -319,8 +297,7 @@ const FiltersSection = ({
             <button
               className="soc-btn increment"
               onClick={() => {
-                const currentVal =
-                  socFilter === "all" ? 25 : Number(socFilter);
+                const currentVal = socFilter === "all" ? 25 : Number(socFilter);
                 const newVal = Math.min(100, currentVal + 5);
                 onRangeFilterChange("socFilter", newVal);
               }}
@@ -332,7 +309,7 @@ const FiltersSection = ({
               <button
                 className="soc-btn clear"
                 onClick={() => onRangeFilterChange("socFilter", "all")}
-                title="Clear SOC filter"
+                title="Clear"
               >
                 &times;
               </button>
@@ -341,10 +318,8 @@ const FiltersSection = ({
         </div>
 
         {/* Extension filter */}
-        <div
-          className={`filter-group range-filter ${extensionMin !== "" || extensionMax !== "" ? "active" : ""}`}
-        >
-          <label>Extensions (5-min)</label>
+        <div className={`filter-group range-filter ${extensionMin !== "" || extensionMax !== "" ? "active" : ""}`}>
+          <label><ExtensionIcon size={11} /> Extensions</label>
           <div className="range-input-container">
             <input
               type="number"
@@ -353,12 +328,7 @@ const FiltersSection = ({
               value={extensionMin}
               placeholder="Min"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "extensionMin",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("extensionMin", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -370,12 +340,7 @@ const FiltersSection = ({
               value={extensionMax}
               placeholder="Max"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "extensionMax",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("extensionMax", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -394,11 +359,9 @@ const FiltersSection = ({
           </div>
         </div>
 
-        {/* kWh Range filter (Outlier) */}
-        <div
-          className={`filter-group range-filter ${kwhMin !== "" || kwhMax !== "" ? "active" : ""}`}
-        >
-          <label>kWh Range</label>
+        {/* kWh Range filter */}
+        <div className={`filter-group range-filter ${kwhMin !== "" || kwhMax !== "" ? "active" : ""}`}>
+          <label><EnergyIcon size={11} /> kWh Range</label>
           <div className="range-input-container">
             <input
               type="number"
@@ -408,12 +371,7 @@ const FiltersSection = ({
               value={kwhMin}
               placeholder="Min"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "kwhMin",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("kwhMin", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -426,12 +384,7 @@ const FiltersSection = ({
               value={kwhMax}
               placeholder="Max"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "kwhMax",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("kwhMax", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -450,11 +403,9 @@ const FiltersSection = ({
           </div>
         </div>
 
-        {/* $/kWh Range filter (Outlier) */}
-        <div
-          className={`filter-group range-filter ${costPerKwhMin !== "" || costPerKwhMax !== "" ? "active" : ""}`}
-        >
-          <label>$/kWh Range</label>
+        {/* $/kWh Range filter */}
+        <div className={`filter-group range-filter ${costPerKwhMin !== "" || costPerKwhMax !== "" ? "active" : ""}`}>
+          <label><CostIcon size={11} /> $/kWh Range</label>
           <div className="range-input-container">
             <input
               type="number"
@@ -464,12 +415,7 @@ const FiltersSection = ({
               value={costPerKwhMin}
               placeholder="Min"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "costPerKwhMin",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("costPerKwhMin", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -482,12 +428,7 @@ const FiltersSection = ({
               value={costPerKwhMax}
               placeholder="Max"
               onChange={(e) =>
-                onRangeFilterChange(
-                  "costPerKwhMax",
-                  e.target.value === ""
-                    ? ""
-                    : Math.max(0, Number(e.target.value))
-                )
+                onRangeFilterChange("costPerKwhMax", e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))
               }
               className="range-input"
             />
@@ -505,7 +446,6 @@ const FiltersSection = ({
             )}
           </div>
         </div>
-
       </div>
     </section>
   );
