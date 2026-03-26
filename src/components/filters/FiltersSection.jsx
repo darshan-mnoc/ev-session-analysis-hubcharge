@@ -266,19 +266,19 @@ const FiltersSection = ({
               className="soc-btn decrement"
               onClick={() => {
                 const currentVal = socFilter === "all" ? 30 : Number(socFilter);
-                const newVal = Math.max(5, currentVal - 5);
+                const newVal = Math.max(1, currentVal - 1);
                 onRangeFilterChange("socFilter", newVal);
               }}
-              disabled={socFilter !== "all" && Number(socFilter) <= 5}
+              disabled={socFilter !== "all" && Number(socFilter) <= 1}
             >
               &minus;
             </button>
             <div className="soc-input-wrapper">
               <input
                 type="number"
-                min="5"
+                min="1"
                 max="100"
-                step="5"
+                step="1"
                 value={socFilter === "all" ? "" : socFilter}
                 placeholder="All"
                 onChange={(e) => {
@@ -286,7 +286,7 @@ const FiltersSection = ({
                   if (inputVal === "") {
                     onRangeFilterChange("socFilter", "all");
                   } else {
-                    const val = Math.min(100, Math.max(5, Number(inputVal) || 5));
+                    const val = Math.min(100, Math.max(1, Number(inputVal) || 1));
                     onRangeFilterChange("socFilter", val);
                   }
                 }}
@@ -297,8 +297,8 @@ const FiltersSection = ({
             <button
               className="soc-btn increment"
               onClick={() => {
-                const currentVal = socFilter === "all" ? 25 : Number(socFilter);
-                const newVal = Math.min(100, currentVal + 5);
+                const currentVal = socFilter === "all" ? 29 : Number(socFilter);
+                const newVal = Math.min(100, currentVal + 1);
                 onRangeFilterChange("socFilter", newVal);
               }}
               disabled={socFilter !== "all" && Number(socFilter) >= 100}

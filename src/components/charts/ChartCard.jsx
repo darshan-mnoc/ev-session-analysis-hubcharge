@@ -25,6 +25,7 @@ const ChartCard = ({
   secondaryDataKey,
   secondaryColor,
   secondaryUnit,
+  chartType,
 }) => {
   if (!data || data.length === 0) {
     return (
@@ -109,7 +110,7 @@ const ChartCard = ({
                 domain={["auto", "auto"]}
               />
             )}
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip chartType={chartType} />} />
             <Legend
               verticalAlign="top"
               height={36}

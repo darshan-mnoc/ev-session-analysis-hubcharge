@@ -3,7 +3,17 @@
  * Displays statistics and metrics for filtered session data
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import {
   CarIcon,
   EnergyIcon,
@@ -12,7 +22,58 @@ import {
   BatteryIcon,
 } from "../common/Icons";
 
+// Custom tooltip for traffic chart
+const TrafficTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0);
+    return (
+      <div className="chart-tooltip">
+        <div className="tooltip-header">{label}</div>
+        <div className="tooltip-content">
+          {payload.map((entry, index) => (
+            <div key={index} className="tooltip-row">
+              <span
+                className="tooltip-icon"
+                style={{ color: entry.color }}
+              >
+                <BatteryIcon size={12} />
+              </span>
+              <span className="tooltip-name">{entry.name}</span>
+              <span className="tooltip-value">{entry.value}</span>
+            </div>
+          ))}
+          <div className="tooltip-row total">
+            <span className="tooltip-icon">
+              <ChargerIcon size={12} />
+            </span>
+            <span className="tooltip-name">Total</span>
+            <span className="tooltip-value">{total}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const StatsDashboard = ({ stats }) => {
+  // Prepare traffic chart data
+  const trafficData = useMemo(() => {
+    if (!stats) return [];
+    return [
+      {
+        name: "Winline (160kW)",
+        "400V": stats.countMBS1_400V || 0,
+        "800V": stats.countMBS1_800V || 0,
+      },
+      {
+        name: "Yotai (180kW)",
+        "400V": stats.countMBS2_400V || 0,
+        "800V": stats.countMBS2_800V || 0,
+      },
+    ];
+  }, [stats]);
+
   if (!stats) return null;
 
   return (
@@ -216,6 +277,66 @@ const StatsDashboard = ({ stats }) => {
               </span>
               <span className="session-mini">{stats.countMBS2_800V}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Traffic Chart */}
+        <div className="stat-card traffic-chart">
+          <div className="stat-header">
+            <span className="stat-icon">
+              <ChargerIcon size={16} />
+            </span>
+            <span className="stat-label">Sessions by Charger</span>
+          </div>
+          <div className="chart-wrapper traffic">
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart
+                data={trafficData}
+                layout="vertical"
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#334155"
+                  horizontal={true}
+                  vertical={false}
+                />
+                <XAxis
+                  type="number"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#64748b", fontSize: 11 }}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
+                  width={100}
+                />
+                <Tooltip content={<TrafficTooltip />} />
+                <Legend
+                  verticalAlign="top"
+                  height={30}
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{ paddingBottom: "5px" }}
+                />
+                <Bar
+                  dataKey="400V"
+                  stackId="a"
+                  fill="#64748b"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="800V"
+                  stackId="a"
+                  fill="#f97316"
+                  radius={[0, 4, 4, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

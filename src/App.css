@@ -1260,7 +1260,7 @@ textarea {
 }
 
 .stats-row.machines {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 /* ── Stat Card ─────────────────────────────────────────── */
@@ -1580,6 +1580,46 @@ textarea {
   font-size: 11px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* Traffic Chart */
+.stat-card.traffic-chart {
+  flex: 1;
+  min-width: 250px;
+}
+
+.stat-card.traffic-chart .stat-header {
+  margin-bottom: 4px;
+}
+
+.chart-wrapper.traffic {
+  flex: 1;
+  min-height: 140px;
+}
+
+.chart-wrapper.traffic .recharts-legend-wrapper {
+  padding-top: 0 !important;
+}
+
+.chart-wrapper.traffic .recharts-legend-item-text {
+  color: var(--text-secondary) !important;
+  font-size: 10px !important;
+}
+
+/* Tooltip total row */
+.tooltip-row.total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.tooltip-row.total .tooltip-name {
+  color: var(--text-primary);
+}
+
+.tooltip-row.total .tooltip-value {
+  color: var(--accent);
 }
 
 /* ============================================================
@@ -2959,6 +2999,12 @@ svg:focus {
 }
 .tooltip-icon.battery {
   color: var(--text-muted);
+}
+.tooltip-icon.voltage {
+  color: #8b5cf6;
+}
+.tooltip-icon.current {
+  color: #f97316;
 }
 
 .tooltip-dot {

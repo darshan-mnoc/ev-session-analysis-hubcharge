@@ -479,6 +479,7 @@ const SessionDetails = ({
           secondaryDataKey="socPercent"
           secondaryColor="#52525b"
           secondaryUnit="%"
+          chartType="power-soc"
         />
 
         <ChartCard
@@ -490,6 +491,7 @@ const SessionDetails = ({
           secondaryDataKey="avgCurrentA"
           secondaryColor="#f97316"
           secondaryUnit="A"
+          chartType="voltage-current"
         />
       </div>
     </>
