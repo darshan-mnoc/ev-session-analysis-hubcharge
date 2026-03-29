@@ -3,17 +3,34 @@
  */
 
 /**
+ * Map old machine names to new names
+ */
+const MACHINE_NAME_MAP = {
+  winline: "DCFC1",
+  Winline: "DCFC1",
+  yotai: "DCFC2",
+  Yotai: "DCFC2",
+};
+
+/**
+ * Normalize machine type name (convert old names to new)
+ */
+export const normalizeMachineType = (machineType) => {
+  return MACHINE_NAME_MAP[machineType] || machineType;
+};
+
+/**
  * Get machine info based on CPID and connector ID
  */
 export const getMachineInfo = (cpid, connectorId) => {
   if (cpid === "MBS_1" && connectorId === 1)
-    return { machine_type: "winline", connector_type: "CCS1" };
+    return { machine_type: "DCFC1", connector_type: "CCS1" };
   if (cpid === "MBS_1" && connectorId === 2)
-    return { machine_type: "winline", connector_type: "NACS" };
+    return { machine_type: "DCFC1", connector_type: "NACS" };
   if (cpid === "MBS_2" && connectorId === 1)
-    return { machine_type: "yotai", connector_type: "CCS1" };
+    return { machine_type: "DCFC2", connector_type: "CCS1" };
   if (cpid === "MBS_2" && connectorId === 2)
-    return { machine_type: "yotai", connector_type: "NACS" };
+    return { machine_type: "DCFC2", connector_type: "NACS" };
   return { machine_type: "unknown", connector_type: "unknown" };
 };
 

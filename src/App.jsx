@@ -34,7 +34,7 @@ import {
 } from "./hooks";
 
 // Utils & Config
-import { downloadCSV, getYAxisUnit } from "./utils/helpers";
+import { downloadCSV, getYAxisUnit, normalizeMachineType } from "./utils/helpers";
 import { DEFAULT_FILTERS, ITEMS_PER_PAGE } from "./constants/config";
 
 function App() {
@@ -60,7 +60,8 @@ function App() {
     durationMin: "",
     durationMax: "",
     priceFilter: "all",
-    socFilter: "all",
+    socMin: "",
+    socMax: "",
     extensionMin: "",
     extensionMax: "",
     startDate: "",
@@ -98,7 +99,8 @@ function App() {
     const sites = [...new Set(data.map((d) => d.ems_site))]
       .filter(Boolean)
       .sort();
-    const machineTypes = [...new Set(data.map((d) => d.machine_type))]
+    // Normalize machine types to convert old names (winline/yotai) to new (DCFC1/DCFC2)
+    const machineTypes = [...new Set(data.map((d) => normalizeMachineType(d.machine_type)))]
       .filter(Boolean)
       .sort();
     const connectorTypes = [...new Set(data.map((d) => d.connector_type))]
@@ -137,7 +139,8 @@ function App() {
       durationMin: "",
       durationMax: "",
       priceFilter: "all",
-      socFilter: "all",
+      socMin: "",
+      socMax: "",
       extensionMin: "",
       extensionMax: "",
       startDate: "",
@@ -268,7 +271,7 @@ function App() {
       />
 
       {/* Statistics Dashboard */}
-      <StatsDashboard stats={stats} />
+      <StatsDashboard stats={stats} sessions={data} />
 
       {/* Performance Charts Section */}
       {(performanceChartData.count400V > 0 ||

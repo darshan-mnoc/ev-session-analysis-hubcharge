@@ -1622,6 +1622,226 @@ textarea {
   color: var(--accent);
 }
 
+/* Billing Cycles Section */
+.stats-row.billing {
+  grid-template-columns: 1fr;
+}
+
+.stat-card.billing-card {
+  width: 100%;
+}
+
+.billing-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.billing-stats-content {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.billing-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.billing-table-row {
+  display: grid;
+  grid-template-columns: 200px 120px 120px 80px;
+  gap: 16px;
+  padding: 12px 16px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.billing-table-row.header {
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.billing-table-row.header span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.billing-table-row.header .col-grid,
+.billing-table-row.header .col-session,
+.billing-table-row.header .col-ratio {
+  justify-content: flex-end;
+}
+
+.billing-table-row.data {
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.billing-table-row.data:last-of-type {
+  border-bottom: none;
+}
+
+.billing-table-row.total {
+  margin-top: 2px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%);
+  border-radius: 0 0 var(--radius) var(--radius);
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.col-cycle {
+  text-align: left;
+}
+
+.col-grid,
+.col-session,
+.col-ratio {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.cycle-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.billing-table-row.total .cycle-label {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.billing-table-row .value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.grid-value {
+  color: var(--green);
+}
+
+.grid-value.accent {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.session-value {
+  color: var(--accent);
+}
+
+.session-value.accent {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ratio-value {
+  font-weight: 600;
+}
+
+.ratio-value.good {
+  color: var(--green);
+}
+
+.ratio-value.medium {
+  color: #eab308;
+}
+
+.ratio-value.low {
+  color: var(--red);
+}
+
+.billing-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  min-width: 180px;
+}
+
+.billing-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.billing-metric.highlight {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.metric-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.metric-value.accent {
+  color: var(--green);
+}
+
+.metric-value.session {
+  color: var(--accent);
+}
+
+.metric-value.good {
+  color: var(--green);
+}
+
+.metric-value.medium {
+  color: #eab308;
+}
+
+.metric-value.low {
+  color: var(--red);
+}
+
+.billing-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 /* ============================================================
    PERFORMANCE CHARTS SECTION
    ============================================================ */

@@ -10,6 +10,7 @@ import {
   BatteryIcon,
   ChartIcon,
 } from "../common/Icons";
+import { normalizeMachineType } from "../../utils/helpers";
 
 const SessionCard = ({ session, isSelected, onClick }) => (
   <div

@@ -10,8 +10,8 @@ const SITE_CONFIG = {
 
 // Charger specifications
 const CHARGERS = {
-  winline: { name: "Winline", id: "MBS_1", maxKw: 160, maxAmps: 200 },
-  yotai: { name: "Yotai", id: "MBS_2", maxKw: 180, maxAmps: 400 },
+  dcfc1: { name: "DCFC1", id: "MBS_1", maxKw: 160, maxAmps: 200 },
+  dcfc2: { name: "DCFC2", id: "MBS_2", maxKw: 180, maxAmps: 400 },
 };
 
 // EV Database with accurate charging curves
@@ -610,7 +610,7 @@ function Calculator() {
   const [manualCurve, setManualCurve] = useState("mod400");
 
   // Charging parameters
-  const [charger, setCharger] = useState("yotai");
+  const [charger, setCharger] = useState("dcfc2");
   const [startSoc, setStartSoc] = useState(20);
   const [selectedTime, setSelectedTime] = useState(0);
 
@@ -751,7 +751,7 @@ function Calculator() {
       <header className="calc-header">
         <div>
           <h1>Charging Calculator</h1>
-          <p>HC-MBS Site · Yotai & Winline DCFC</p>
+          <p>HC-MBS Site · DCFC2 & DCFC1 DCFC</p>
         </div>
       </header>
 
@@ -1136,10 +1136,10 @@ function Calculator() {
             )}
             {constraints.bottleneck === "amps" &&
               vehicleSpecs.voltage === 400 &&
-              charger === "winline" && (
+              charger === "dcfc1" && (
                 <div className="alert orange">
                   ⚠ 400V vehicle amp-limited to {constraints.limAmps.toFixed(0)}{" "}
-                  kW on Winline. Yotai allows up to{" "}
+                  kW on DCFC1. DCFC2 allows up to{" "}
                   {Math.min(180, (400 * 400) / 1000).toFixed(0)} kW.
                 </div>
               )}
@@ -1166,11 +1166,11 @@ function Calculator() {
               </div>
               <div className="site-item">
                 <div className="site-label">DCFC 1</div>
-                <div className="site-value">{CHARGERS.winline.maxKw} kW</div>
+                <div className="site-value">{CHARGERS.dcfc1.maxKw} kW</div>
               </div>
               <div className="site-item">
                 <div className="site-label">DCFC 2</div>
-                <div className="site-value">{CHARGERS.yotai.maxKw} kW</div>
+                <div className="site-value">{CHARGERS.dcfc2.maxKw} kW</div>
               </div>
             </div>
           </div>

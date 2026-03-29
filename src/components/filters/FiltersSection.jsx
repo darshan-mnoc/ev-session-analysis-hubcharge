@@ -29,7 +29,8 @@ const FiltersSection = ({
     durationMin,
     durationMax,
     priceFilter,
-    socFilter,
+    socMin,
+    socMax,
     extensionMin,
     extensionMax,
     startDate,
@@ -258,57 +259,42 @@ const FiltersSection = ({
           </div>
         </div>
 
-        {/* SOC filter */}
-        <div className={`filter-group soc-filter ${socFilter !== "all" ? "active" : ""}`}>
-          <label><BatteryIcon size={11} /> Max Start SOC</label>
-          <div className="soc-input-container">
-            <button
-              className="soc-btn decrement"
-              onClick={() => {
-                const currentVal = socFilter === "all" ? 30 : Number(socFilter);
-                const newVal = Math.max(1, currentVal - 1);
-                onRangeFilterChange("socFilter", newVal);
-              }}
-              disabled={socFilter !== "all" && Number(socFilter) <= 1}
-            >
-              &minus;
-            </button>
-            <div className="soc-input-wrapper">
-              <input
-                type="number"
-                min="1"
-                max="100"
-                step="1"
-                value={socFilter === "all" ? "" : socFilter}
-                placeholder="All"
-                onChange={(e) => {
-                  const inputVal = e.target.value;
-                  if (inputVal === "") {
-                    onRangeFilterChange("socFilter", "all");
-                  } else {
-                    const val = Math.min(100, Math.max(1, Number(inputVal) || 1));
-                    onRangeFilterChange("socFilter", val);
-                  }
-                }}
-                className="soc-input"
-              />
-              <span className="soc-unit">%</span>
-            </div>
-            <button
-              className="soc-btn increment"
-              onClick={() => {
-                const currentVal = socFilter === "all" ? 29 : Number(socFilter);
-                const newVal = Math.min(100, currentVal + 1);
-                onRangeFilterChange("socFilter", newVal);
-              }}
-              disabled={socFilter !== "all" && Number(socFilter) >= 100}
-            >
-              +
-            </button>
-            {socFilter !== "all" && (
+        {/* SOC filter (min/max range) */}
+        <div className={`filter-group range-filter ${socMin !== "" || socMax !== "" ? "active" : ""}`}>
+          <label><BatteryIcon size={11} /> Start SOC (%)</label>
+          <div className="range-input-container">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              value={socMin}
+              placeholder="Min"
+              onChange={(e) =>
+                onRangeFilterChange("socMin", e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value))))
+              }
+              className="range-input"
+            />
+            <span className="range-separator">&ndash;</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              value={socMax}
+              placeholder="Max"
+              onChange={(e) =>
+                onRangeFilterChange("socMax", e.target.value === "" ? "" : Math.max(0, Math.min(100, Number(e.target.value))))
+              }
+              className="range-input"
+            />
+            {(socMin !== "" || socMax !== "") && (
               <button
-                className="soc-btn clear"
-                onClick={() => onRangeFilterChange("socFilter", "all")}
+                className="range-clear-btn"
+                onClick={() => {
+                  onRangeFilterChange("socMin", "");
+                  onRangeFilterChange("socMax", "");
+                }}
                 title="Clear"
               >
                 &times;

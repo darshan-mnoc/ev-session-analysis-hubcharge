@@ -21,6 +21,15 @@ import {
   ChargerIcon,
   BatteryIcon,
 } from "../common/Icons";
+import { useMeterData } from "../../hooks/useMeterData";
+
+// Format number with commas and decimals
+const formatNumber = (num, decimals = 1) => {
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+};
 
 // Custom tooltip for traffic chart
 const TrafficTooltip = ({ active, payload, label }) => {
@@ -32,10 +41,7 @@ const TrafficTooltip = ({ active, payload, label }) => {
         <div className="tooltip-content">
           {payload.map((entry, index) => (
             <div key={index} className="tooltip-row">
-              <span
-                className="tooltip-icon"
-                style={{ color: entry.color }}
-              >
+              <span className="tooltip-icon" style={{ color: entry.color }}>
                 <BatteryIcon size={12} />
               </span>
               <span className="tooltip-name">{entry.name}</span>
@@ -56,18 +62,21 @@ const TrafficTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const StatsDashboard = ({ stats }) => {
+const StatsDashboard = ({ stats, sessions }) => {
+  // Billing cycle meter data
+  const { billingStats, loading: meterLoading } = useMeterData(sessions);
+
   // Prepare traffic chart data
   const trafficData = useMemo(() => {
     if (!stats) return [];
     return [
       {
-        name: "Winline (160kW)",
+        name: "DCFC1 (160kW)",
         "400V": stats.countMBS1_400V || 0,
         "800V": stats.countMBS1_800V || 0,
       },
       {
-        name: "Yotai (180kW)",
+        name: "DCFC2 (180kW)",
         "400V": stats.countMBS2_400V || 0,
         "800V": stats.countMBS2_800V || 0,
       },
@@ -91,11 +100,13 @@ const StatsDashboard = ({ stats }) => {
           <div className="stat-main-value">{stats.socFilteredCount}</div>
           <div className="stat-sub arch-breakdown">
             <div className="arch-stat">
-              <span className="arch-count">{stats.count400V} &times; 400V</span>
+              {/* <span className="arch-count">{stats.count400V} &times; 400V</span> */}
+              <span className="arch-count">400V</span>
               <span className="arch-percent">{stats.ratio400V}%</span>
             </div>
             <div className="arch-stat accent">
-              <span className="arch-count">{stats.count800V} &times; 800V</span>
+              {/* <span className="arch-count">{stats.count800V} &times; 800V</span> */}
+              <span className="arch-count">800V</span>
               <span className="arch-percent">{stats.ratio800V}%</span>
             </div>
           </div>
@@ -211,14 +222,14 @@ const StatsDashboard = ({ stats }) => {
 
       {/* Machines Row */}
       <div className="stats-row machines">
-        {/* Winline */}
+        {/* DCFC1 */}
         <div className="stat-card machine">
           <div className="stat-header">
             <div className="machine-name">
               <span className="stat-icon">
                 <ChargerIcon size={16} />
               </span>
-              <span>Winline</span>
+              <span>DCFC1</span>
               <span className="power-badge">160kW</span>
             </div>
             <span className="session-count">{stats.countMBS1} sessions</span>
@@ -246,14 +257,14 @@ const StatsDashboard = ({ stats }) => {
           </div>
         </div>
 
-        {/* Yotai */}
+        {/* DCFC2 */}
         <div className="stat-card machine">
           <div className="stat-header">
             <div className="machine-name">
               <span className="stat-icon">
                 <ChargerIcon size={16} />
               </span>
-              <span>Yotai</span>
+              <span>DCFC2</span>
               <span className="power-badge">180kW</span>
             </div>
             <span className="session-count">{stats.countMBS2} sessions</span>
@@ -338,6 +349,99 @@ const StatsDashboard = ({ stats }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* Billing Cycles Row - Green Button Data */}
+      <div className="stats-row billing">
+        <div className="stat-card billing-card wide">
+          <div className="stat-header">
+            <span className="stat-icon">
+              <EnergyIcon size={16} />
+            </span>
+            <span className="stat-label">
+              Billing Cycle Energy Comparison (Grid vs Sessions)
+            </span>
+          </div>
+
+          {meterLoading ? (
+            <div className="billing-loading">
+              <span className="loading-spinner small" />
+              <span>Loading meter data...</span>
+            </div>
+          ) : billingStats ? (
+            <div className="billing-stats-content">
+              <div className="billing-table">
+                <div className="billing-table-row header">
+                  <span className="col-cycle">Billing Cycle</span>
+                  <span className="col-grid">
+                    <EnergyIcon size={10} /> Grid (kWh)
+                  </span>
+                  <span className="col-session">
+                    <ChargerIcon size={10} /> Sessions (kWh)
+                  </span>
+                  <span className="col-ratio">Ratio</span>
+                </div>
+                {billingStats.cycles.map((cycle) => (
+                  <div key={cycle.label} className="billing-table-row data">
+                    <span className="col-cycle cycle-label">{cycle.label}</span>
+                    <span className="col-grid value grid-value">
+                      {formatNumber(cycle.gridKwh)}
+                    </span>
+                    <span className="col-session value session-value">
+                      {formatNumber(cycle.sessionKwh)}
+                    </span>
+                    <span
+                      className={`col-ratio value ratio-value ${cycle.ratio >= 80 ? "good" : cycle.ratio >= 60 ? "medium" : "low"}`}
+                    >
+                      {formatNumber(cycle.ratio)}%
+                    </span>
+                  </div>
+                ))}
+                <div className="billing-table-row total">
+                  <span className="col-cycle cycle-label">Total</span>
+                  <span className="col-grid value grid-value accent">
+                    {formatNumber(billingStats.totals.gridKwh)}
+                  </span>
+                  <span className="col-session value session-value accent">
+                    {formatNumber(billingStats.totals.sessionKwh)}
+                  </span>
+                  <span
+                    className={`col-ratio value ratio-value ${billingStats.totals.ratio >= 80 ? "good" : billingStats.totals.ratio >= 60 ? "medium" : "low"}`}
+                  >
+                    {formatNumber(billingStats.totals.ratio)}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="billing-summary">
+                <div className="billing-metric">
+                  <span className="metric-label">Grid Energy</span>
+                  <span className="metric-value accent">
+                    {formatNumber(billingStats.totals.gridKwh)} kWh
+                  </span>
+                </div>
+                <div className="billing-metric">
+                  <span className="metric-label">Session Discharge</span>
+                  <span className="metric-value session">
+                    {formatNumber(billingStats.totals.sessionKwh)} kWh
+                  </span>
+                </div>
+                <div className="billing-metric highlight">
+                  <span className="metric-label">Efficiency Ratio</span>
+                  <span
+                    className={`metric-value ${billingStats.totals.ratio >= 80 ? "good" : billingStats.totals.ratio >= 60 ? "medium" : "low"}`}
+                  >
+                    {formatNumber(billingStats.totals.ratio)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="billing-empty">
+              <span>No billing data available</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

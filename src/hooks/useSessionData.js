@@ -7,6 +7,7 @@ import { apiClient, sessionApi, ApiError } from "../api/apiClient";
 import { useAuth } from "../AuthContext";
 import {
   getMachineInfo,
+  normalizeMachineType,
   processBuckets,
   calculateVoltageArch,
   calculateKwh10Min,
@@ -125,6 +126,8 @@ export const useSessionData = () => {
           full_id: session.session_id || "N/A",
           raw_transaction_id: session.raw_transaction_id,
           ...machineInfo,
+          // Normalize machine_type to convert old names (winline/yotai) to new (DCFC1/DCFC2)
+          machine_type: normalizeMachineType(machineInfo.machine_type),
           cpid: session.cpid || "unknown",
           connector_id: session.connector_id || 0,
           duration_minutes: durationMin,
@@ -266,7 +269,8 @@ export const useFilteredData = (data, filters, rangeFilters) => {
     durationMin,
     durationMax,
     priceFilter,
-    socFilter,
+    socMin,
+    socMax,
     extensionMin,
     extensionMax,
     startDate,
@@ -284,7 +288,7 @@ export const useFilteredData = (data, filters, rangeFilters) => {
         return false;
       if (
         filters.machineType !== "all" &&
-        session.machine_type !== filters.machineType
+        normalizeMachineType(session.machine_type) !== filters.machineType
       )
         return false;
       if (
@@ -314,11 +318,10 @@ export const useFilteredData = (data, filters, rangeFilters) => {
           return false;
       }
 
-      // SOC filter
-      if (socFilter !== "all") {
-        const sessionSocStart = session.soc_start || 0;
-        if (sessionSocStart > Number(socFilter)) return false;
-      }
+      // SOC filter (min and max)
+      const sessionSocStart = session.soc_start || 0;
+      if (socMin !== "" && sessionSocStart < Number(socMin)) return false;
+      if (socMax !== "" && sessionSocStart > Number(socMax)) return false;
 
       // Extension filter
       const sessionExtensions = session.extension_count || 0;
@@ -380,7 +383,8 @@ export const useFilteredData = (data, filters, rangeFilters) => {
     durationMin,
     durationMax,
     priceFilter,
-    socFilter,
+    socMin,
+    socMax,
     extensionMin,
     extensionMax,
     startDate,
