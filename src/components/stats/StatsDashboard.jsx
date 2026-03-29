@@ -97,7 +97,7 @@ const StatsDashboard = ({ stats, sessions }) => {
             </span>
             <span className="stat-label">Sessions</span>
           </div>
-          <div className="stat-main-value">{stats.socFilteredCount}</div>
+          {/* <div className="stat-main-value">{stats.socFilteredCount}</div> */}
           <div className="stat-sub arch-breakdown">
             <div className="arch-stat">
               {/* <span className="arch-count">{stats.count400V} &times; 400V</span> */}
@@ -353,7 +353,7 @@ const StatsDashboard = ({ stats, sessions }) => {
       </div>
 
       {/* Billing Cycles Row - Green Button Data */}
-      <div className="stats-row billing">
+      {/* <div className="stats-row billing">
         <div className="stat-card billing-card wide">
           <div className="stat-header">
             <span className="stat-icon">
@@ -443,7 +443,7 @@ const StatsDashboard = ({ stats, sessions }) => {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
