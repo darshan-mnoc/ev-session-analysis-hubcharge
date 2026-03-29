@@ -276,7 +276,7 @@ export const downloadCSV = (filteredData) => {
     session.full_id || "",
     session.user_full_name || "",
     session.ems_site || "",
-    session.machine_type || "",
+    normalizeMachineType(session.machine_type) || "",
     session.connector_type || "",
     formatDate(session.start_time),
     formatDate(session.end_time),

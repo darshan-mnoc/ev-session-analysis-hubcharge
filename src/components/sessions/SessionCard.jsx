@@ -83,7 +83,7 @@ const SessionCard = ({ session, isSelected, onClick }) => (
       >
         {session.voltage_arch || "400V"}
       </span>
-      <span className="machine-badge">{session.machine_type}</span>
+      <span className="machine-badge">{normalizeMachineType(session.machine_type)}</span>
       <span className="connector-badge">{session.connector_type}</span>
       {session.buckets && session.buckets.length > 0 && (
         <span className="chart-badge">

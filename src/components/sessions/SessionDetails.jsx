@@ -6,6 +6,7 @@
 import React, { useMemo } from "react";
 import { TIME_RANGE_OPTIONS } from "../../constants/config";
 import { ChartCard } from "../charts";
+import { normalizeMachineType } from "../../utils/helpers";
 import {
   UserIcon,
   SiteIcon,
@@ -197,7 +198,7 @@ const SessionDetails = ({
             </Icon>{" "}
             Machine
           </span>
-          <span className="detail-value">{session.machine_type}</span>
+          <span className="detail-value">{normalizeMachineType(session.machine_type)}</span>
         </div>
         <div className="detail-item">
           <span className="detail-label">
