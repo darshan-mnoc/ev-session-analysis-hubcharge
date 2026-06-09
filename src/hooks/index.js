@@ -5,3 +5,15 @@ export {
   useChartDataSelector,
 } from "./usePerformanceChartData";
 export { useMeterData } from "./useMeterData";
+export {
+  useLiveSessionData,
+  useSessionSummary,
+  useIRRProjection,
+  useRevenueWaterfall,
+  useAIInsight,
+} from "./useFinancialData";
+export {
+  useEbeCalculator,
+  DEFAULT_PARAMS,
+  PARAM_DEFINITIONS,
+} from "./useEbeCalculator";

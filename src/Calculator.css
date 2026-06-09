@@ -162,7 +162,7 @@
   border-radius: 8px;
   color: #fafaf9;
   font-size: 0.95rem;
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
 }
 
 .input-group input:focus {
@@ -379,7 +379,7 @@
 }
 
 .effective-peak strong {
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
 }
 
 /* SoC & Time Row */
@@ -415,7 +415,7 @@
   border: none;
   color: #fafaf9;
   font-size: 1.25rem;
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   text-align: center;
 }
 
@@ -524,9 +524,9 @@
 
 .results-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: #44403c;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  /* background: #44403c; */
 }
 
 .result-item {
@@ -545,7 +545,7 @@
 .result-value {
   font-size: 1.75rem;
   font-weight: 700;
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   color: #fafaf9;
   line-height: 1;
 }
@@ -556,9 +556,15 @@
   color: #a8a29e;
 }
 
-.result-value.green { color: #22c55e; }
-.result-value.blue { color: #3b82f6; }
-.result-value.orange { color: #f97316; }
+.result-value.green {
+  color: #22c55e;
+}
+.result-value.blue {
+  color: #3b82f6;
+}
+.result-value.orange {
+  color: #f97316;
+}
 
 .result-sub {
   font-size: 0.7rem;
@@ -598,7 +604,7 @@
 .viz-start,
 .viz-end {
   font-size: 0.75rem;
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   color: #a8a29e;
   min-width: 36px;
 }
@@ -738,7 +744,7 @@
 .site-value {
   font-size: 1.125rem;
   font-weight: 700;
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   color: #f97316;
 }
 

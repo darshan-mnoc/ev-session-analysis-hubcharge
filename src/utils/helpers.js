@@ -3,6 +3,87 @@
  */
 
 /**
+ * Detect if vehicle is Tesla based on session note
+ * Tesla vehicles typically identified by:
+ * - "Tesla" in the note
+ * - Model names: Model S, Model 3, Model X, Model Y, Cybertruck
+ * - VIN patterns starting with "5YJ" (Tesla prefix)
+ * - NACS connector with specific patterns
+ */
+export const detectVehicleType = (sessionNote, connectorType) => {
+  if (!sessionNote && !connectorType) {
+    return { isTesla: false, vehicleType: "Unknown" };
+  }
+
+  const note = (sessionNote || "").toLowerCase();
+
+  // Check for Tesla indicators in session note
+  const teslaPatterns = [
+    /tesla/i,
+    /model\s*[s3xy]/i,
+    /model\s*s/i,
+    /model\s*3/i,
+    /model\s*x/i,
+    /model\s*y/i,
+    /cybertruck/i,
+    /5yj[a-z0-9]/i,  // Tesla VIN prefix
+    /roadster/i,
+    /plaid/i,
+  ];
+
+  for (const pattern of teslaPatterns) {
+    if (pattern.test(note)) {
+      // Try to extract specific model
+      if (/model\s*s|models/i.test(note)) return { isTesla: true, vehicleType: "Model S" };
+      if (/model\s*3|model3/i.test(note)) return { isTesla: true, vehicleType: "Model 3" };
+      if (/model\s*x|modelx/i.test(note)) return { isTesla: true, vehicleType: "Model X" };
+      if (/model\s*y|modely/i.test(note)) return { isTesla: true, vehicleType: "Model Y" };
+      if (/cybertruck/i.test(note)) return { isTesla: true, vehicleType: "Cybertruck" };
+      if (/roadster/i.test(note)) return { isTesla: true, vehicleType: "Roadster" };
+      return { isTesla: true, vehicleType: "Tesla" };
+    }
+  }
+
+  // Check for non-Tesla EVs in session note
+  const nonTeslaPatterns = [
+    { pattern: /rivian|r1t|r1s/i, type: "Rivian" },
+    { pattern: /lucid|air/i, type: "Lucid" },
+    { pattern: /ford|mach-?e|f-?150|lightning/i, type: "Ford" },
+    { pattern: /chevy|chevrolet|bolt|blazer|equinox|silverado/i, type: "Chevrolet" },
+    { pattern: /hyundai|ioniq|kona/i, type: "Hyundai" },
+    { pattern: /kia|ev6|ev9|niro/i, type: "Kia" },
+    { pattern: /bmw|i4|ix|i7/i, type: "BMW" },
+    { pattern: /audi|e-?tron|q4|q8/i, type: "Audi" },
+    { pattern: /mercedes|eqs|eqe|eqb/i, type: "Mercedes" },
+    { pattern: /volkswagen|vw|id\.?4|id\.?buzz/i, type: "VW" },
+    { pattern: /porsche|taycan/i, type: "Porsche" },
+    { pattern: /nissan|leaf|ariya/i, type: "Nissan" },
+    { pattern: /polestar/i, type: "Polestar" },
+    { pattern: /genesis|gv60|gv70|g80/i, type: "Genesis" },
+    { pattern: /volvo|xc40|c40|ex90/i, type: "Volvo" },
+    { pattern: /cadillac|lyriq/i, type: "Cadillac" },
+    { pattern: /gmc|hummer/i, type: "GMC" },
+    { pattern: /toyota|bz4x/i, type: "Toyota" },
+    { pattern: /honda|prologue/i, type: "Honda" },
+    { pattern: /subaru|solterra/i, type: "Subaru" },
+    { pattern: /mazda|mx-?30/i, type: "Mazda" },
+    { pattern: /mini|cooper/i, type: "Mini" },
+    { pattern: /jaguar|i-?pace/i, type: "Jaguar" },
+    { pattern: /fisker|ocean/i, type: "Fisker" },
+    { pattern: /canoo/i, type: "Canoo" },
+    { pattern: /aptera/i, type: "Aptera" },
+  ];
+
+  for (const { pattern, type } of nonTeslaPatterns) {
+    if (pattern.test(note)) {
+      return { isTesla: false, vehicleType: type };
+    }
+  }
+
+  return { isTesla: false, vehicleType: "Unknown" };
+};
+
+/**
  * Map old machine names to new names
  */
 const MACHINE_NAME_MAP = {

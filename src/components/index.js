@@ -15,3 +15,6 @@ export * from "./stats";
 
 // Auth components
 export * from "./auth";
+
+// Financial components
+export * from "./financial";

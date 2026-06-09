@@ -6,7 +6,7 @@
 import React, { useMemo } from "react";
 import { TIME_RANGE_OPTIONS } from "../../constants/config";
 import { ChartCard } from "../charts";
-import { normalizeMachineType } from "../../utils/helpers";
+import { normalizeMachineType, detectVehicleType } from "../../utils/helpers";
 import {
   UserIcon,
   SiteIcon,
@@ -434,19 +434,39 @@ const SessionDetails = ({
         </div>
       </div>
 
-      {session.session_note && (
-        <div className="detail-highlight-row">
-          <div className="detail-item full-width">
-            <span className="detail-label">
-              <Icon>
-                <NoteIcon size={11} />
-              </Icon>{" "}
-              Note
-            </span>
-            <span className="detail-value">{session.session_note}</span>
+      {/* Vehicle Type & Session Note */}
+      {(() => {
+        const vehicleInfo = detectVehicleType(session.session_note, session.connector_type);
+        return (
+          <div className="detail-highlight-row">
+            {vehicleInfo.vehicleType !== "Unknown" && (
+              <div className="detail-item">
+                <span className="detail-label">
+                  <Icon>
+                    <ChargerIcon size={11} />
+                  </Icon>{" "}
+                  Vehicle
+                </span>
+                <span className={`detail-value ${vehicleInfo.isTesla ? "tesla-vehicle" : "other-ev-vehicle"}`}>
+                  {vehicleInfo.vehicleType}
+                  {vehicleInfo.isTesla && <span className="tesla-badge">Tesla</span>}
+                </span>
+              </div>
+            )}
+            {session.session_note && (
+              <div className="detail-item full-width">
+                <span className="detail-label">
+                  <Icon>
+                    <NoteIcon size={11} />
+                  </Icon>{" "}
+                  Note
+                </span>
+                <span className="detail-value">{session.session_note}</span>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Time Range Filter */}
       <div className="time-range-filter">

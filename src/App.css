@@ -2809,6 +2809,32 @@ svg:focus {
   color: var(--text-muted);
 }
 
+/* Vehicle Type Badge */
+.vehicle-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.vehicle-badge.tesla {
+  background: rgba(232, 33, 39, 0.1);
+  color: #e82127;
+}
+
+.vehicle-badge.other-ev {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.vehicle-badge svg {
+  flex-shrink: 0;
+}
+
 /* ── Pagination ────────────────────────────────────────── */
 .pagination {
   display: flex;
@@ -3031,6 +3057,28 @@ svg:focus {
 .detail-value.stopped-early-value::before {
   content: "⏹";
   font-size: 10px;
+}
+
+.detail-value.tesla-vehicle {
+  color: #e82127;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-value.other-ev-vehicle {
+  color: #3b82f6;
+}
+
+.tesla-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  background: rgba(232, 33, 39, 0.15);
+  color: #e82127;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Highlight Row */
