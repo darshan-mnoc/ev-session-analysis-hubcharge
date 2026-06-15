@@ -24,8 +24,15 @@ export const useSessionData = () => {
   } = useAuth();
 
   const hasFetchedRef = useRef(false);
-  const [data, setData] = useState([]);
+  // EMS pages accumulate here silently — no state, no re-renders per page.
+  // A single setEmsData() fires once when all pages finish.
+  const emsRef = useRef([]);
+
+  const [miniViewData, setMiniViewData] = useState([]);
+  const [emsData, setEmsData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [firstChunkReady, setFirstChunkReady] = useState(false);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState("");
   const [error, setError] = useState(null);
@@ -171,63 +178,85 @@ export const useSessionData = () => {
           !session.is_refunded,
       );
 
-    // Filter to only sessions with bucket data and sort by start time
-    const sessionsWithBuckets = mergedSessions.filter(
-      (s) => s.buckets && s.buckets.length > 0,
-    );
-    sessionsWithBuckets.sort(
+    // Sort by start time — all sessions show in the list immediately.
+    // Sessions without EMS bucket data simply won't have a chart (handled in UI).
+    mergedSessions.sort(
       (a, b) => new Date(b.start_time) - new Date(a.start_time),
     );
 
-    return sessionsWithBuckets;
+    return mergedSessions;
   }, []);
 
+  // Merge + process reactively so the rendered list grows as EMS pages land.
+  const data = useMemo(
+    () => processSessionData(miniViewData, emsData),
+    [miniViewData, emsData, processSessionData],
+  );
+
   /**
-   * Fetch all session data
+   * Fetch session data with page-based pagination (?limit=500&page=N), streaming
+   * pages as they arrive:
+   *  1. mini_view pages first (light) — mapped to 5–45% progress.
+   *  2. EMS pages — the dashboard reveals after the first EMS page, and the list
+   *     keeps growing in the background as later pages land (45–99%).
    */
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setBackgroundLoading(false);
+    setFirstChunkReady(false);
     setError(null);
     setProgress(0);
+    setProgressStatus("");
+    setMiniViewData([]);
+    setEmsData([]);
+    emsRef.current = [];
 
     try {
-      // Step 1: Fetch mini_view data with adaptive limit
-      setProgressStatus("Fetching session data...");
-      setProgress(10);
+      // ── Step 1: mini_view (fast, usually 1 page) ──────────────────────────
+      setProgressStatus("Loading sessions...");
+      setProgress(5);
 
-      const miniViewData = await sessionApi.getMiniView("year", (status) => {
-        setProgressStatus(`Sessions: ${status}`);
+      const miniView = await sessionApi.getMiniView("year", {
+        onProgress: ({ count, fraction }) => {
+          setProgressStatus(`Sessions: ${count} loaded`);
+          setProgress(5 + Math.round(fraction * 30));
+        },
       });
-      setProgress(45);
-      console.log("Mini view sessions loaded:", miniViewData.length);
+      setMiniViewData(miniView);
+      setProgress(35);
+      console.log("Mini view loaded:", miniView.length, "sessions");
 
-      // Step 2: Fetch EMS transactions with adaptive limit
-      setProgressStatus("Fetching EMS transactions...");
-      setProgress(50);
+      // Reveal the dashboard immediately — sessions are visible now.
+      setFirstChunkReady(true);
+      setLoading(false);
+      setBackgroundLoading(true);
 
-      const emsData = await sessionApi.getEmsTransactions((status) => {
-        setProgressStatus(`EMS: ${status}`);
+      // ── Step 2: EMS streaming — accumulate in a ref, zero re-renders ──────
+      // Each page lands in emsRef silently. Only progress numbers update
+      // the UI (cheap scalar state). One setEmsData() fires at the very end,
+      // causing a single re-render that enriches all sessions with chart data.
+      setProgressStatus("Loading chart details...");
+
+      await sessionApi.getEmsTransactions({
+        onProgress: ({ count: _count, fraction }) => {
+          setProgressStatus("Loading chart data");
+          setProgress(35 + Math.round(fraction * 63));
+        },
+        onPage: (rows) => {
+          // Silently accumulate — NO setState, NO re-render per page.
+          emsRef.current = emsRef.current.concat(rows);
+        },
       });
-      setProgress(80);
 
-      const emsArray = Array.isArray(emsData) ? emsData : [];
-      console.log("EMS transactions loaded:", emsArray.length);
-
-      // Step 3: Process and merge data
-      setProgressStatus("Processing data...");
-      setProgress(85);
-      const processedData = processSessionData(miniViewData, emsArray);
-
+      // All EMS data ready — one single state update, one single re-render.
+      setEmsData(emsRef.current);
       setProgress(100);
-      setData(processedData);
+      console.log("EMS loaded:", emsRef.current.length, "records — chart data ready");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError(err.message || "An unexpected error occurred");
-      }
+      setError(err instanceof ApiError ? err.message : (err.message || "An unexpected error occurred"));
     } finally {
       setLoading(false);
+      setBackgroundLoading(false);
     }
   }, [processSessionData]);
 
@@ -235,11 +264,10 @@ export const useSessionData = () => {
    * Refresh data - clears old data and fetches fresh
    */
   const refreshData = useCallback(() => {
-    // Clear existing data to ensure fresh fetch
-    setData([]);
-    // Mark as fetched to prevent useEffect from also triggering
+    emsRef.current = [];
+    setMiniViewData([]);
+    setEmsData([]);
     hasFetchedRef.current = true;
-    // Fetch new data
     fetchData();
   }, [fetchData]);
 
@@ -254,6 +282,8 @@ export const useSessionData = () => {
   return {
     data,
     loading,
+    firstChunkReady,
+    backgroundLoading,
     progress,
     progressStatus,
     error,

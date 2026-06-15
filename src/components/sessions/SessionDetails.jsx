@@ -71,6 +71,7 @@ const SessionDetails = ({
   chartTimeRange,
   onTimeRangeChange,
   onClose,
+  emsLoading = false,
 }) => {
   // Chart data for selected session
   const chartData = useMemo(() => {
@@ -138,14 +139,17 @@ const SessionDetails = ({
     return costAt10 / session.kwh_10_min;
   }, [session, sessionEndInfo]);
 
+  const hasBuckets = session?.buckets && session.buckets.length > 0;
+
   if (!session) {
     return (
       <div className="chart-placeholder">
         <ChartIcon size={40} color="var(--text-muted)" />
-        <h3>Select a Session</h3>
+        <h3>{emsLoading ? "Loading chart data…" : "Select a Session"}</h3>
         <p>
-          Click on any session card to view detailed analytics and charging
-          curves
+          {emsLoading
+            ? "Chart curves will be available once data finishes loading."
+            : "Click on any session card to view detailed analytics and charging curves"}
         </p>
       </div>
     );
@@ -490,7 +494,7 @@ const SessionDetails = ({
         </div>
       </div>
 
-      <div className="charts-container">
+      <div className="charts-container" style={{ position: "relative" }}>
         <ChartCard
           title="Power & State of Charge"
           data={chartData}
@@ -514,6 +518,16 @@ const SessionDetails = ({
           secondaryUnit="A"
           chartType="voltage-current"
         />
+
+        {/* Overlay while EMS bucket data hasn't arrived for this session */}
+        {emsLoading && !hasBuckets && (
+          <div className="chart-loading-overlay">
+            <div className="chart-loading-overlay-inner">
+              <div className="chart-loading-spinner" />
+              <span>Loading chart data…</span>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

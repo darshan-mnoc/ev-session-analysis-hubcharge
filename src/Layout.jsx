@@ -27,15 +27,7 @@ export default function Layout({ children }) {
       <aside className={`sidebar ${mobileMenuOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <div className="logo">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-            <span>EV Analytics</span>
+            <img src={Logo} alt="HubCharge" className="sidebar-logo-img" />
           </div>
           {/* Close button for mobile */}
           <button
@@ -110,26 +102,6 @@ export default function Layout({ children }) {
             </svg>
             Calculator
           </Link>
-          <Link
-            to="/financial"
-            className={`nav-item ${location.pathname === "/financial" ? "active" : ""}`}
-            onClick={closeMobileMenu}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="12" y1="20" x2="12" y2="10" />
-              <line x1="18" y1="20" x2="18" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-              <circle cx="12" cy="8" r="2" />
-              <circle cx="18" cy="3" r="2" />
-              <circle cx="6" cy="12" r="2" />
-            </svg>
-            Financial
-          </Link>
         </nav>
 
         <div className="sidebar-footer">
@@ -140,15 +112,10 @@ export default function Layout({ children }) {
               closeMobileMenu();
             }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
             Logout
           </button>

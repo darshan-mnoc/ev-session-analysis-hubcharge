@@ -6,12 +6,17 @@
 import React from "react";
 
 const ProgressBar = ({ progress, status }) => (
-  <div className="progress-container">
-    <div className="progress-bar">
-      <div className="progress-fill" style={{ width: `${progress}%` }} />
+  <div className="flex w-72 max-w-full flex-col gap-2">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div
+        className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
+        style={{ width: `${progress}%` }}
+      />
     </div>
-    <p className="progress-status">{status}</p>
-    <p className="progress-percent">{progress}%</p>
+    <div className="flex items-center justify-between text-xs">
+      <span className="text-muted-foreground">{status}</span>
+      <span className="font-medium text-foreground">{progress}%</span>
+    </div>
   </div>
 );
 

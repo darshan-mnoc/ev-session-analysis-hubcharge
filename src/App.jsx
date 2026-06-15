@@ -49,8 +49,14 @@ function App() {
   } = useAuth();
 
   // Data fetching
-  const { data, loading, progress, progressStatus, refreshData } =
-    useSessionData();
+  const {
+    data,
+    loading,
+    backgroundLoading,
+    progress,
+    progressStatus,
+    refreshData,
+  } = useSessionData();
 
   // console.log("Raw session data loaded:", data, "sessions");
 
@@ -200,6 +206,12 @@ function App() {
         <div className="header-left">
           <h2>HubCharge Dashboard</h2>
           <p className="header-subtitle">MBS Analytics</p>
+          {backgroundLoading && (
+            <span className="bg-loading-pill">
+              <span className="bg-loading-dot" />
+              {progressStatus || "Loading chart data…"} {progress}%
+            </span>
+          )}
         </div>
         <div className="header-right">
           {user && <span className="user-email">{user.email}</span>}
@@ -225,17 +237,10 @@ function App() {
             onClick={refreshData}
             title="Refresh data"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M23 4v6h-6" />
-              <path d="M1 20v-6h6" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 4v6h-6"/>
+              <path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
           </button>
           <button
@@ -243,17 +248,10 @@ function App() {
             onClick={logout}
             title="Sign out"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
           </button>
         </div>
@@ -271,149 +269,129 @@ function App() {
       />
 
       {/* Statistics Dashboard */}
-      <StatsDashboard stats={stats} sessions={data} />
+      <StatsDashboard stats={stats} sessions={data} emsLoading={backgroundLoading} />
 
-      {/* Performance Charts Section */}
-      {(performanceChartData.count400V > 0 ||
-        performanceChartData.count800V > 0) && (
-        <div className="performance-charts-section">
-          <div className="performance-charts-with-panel">
-            {/* Main Performance Chart with Axis Selection */}
-            <div className="performance-chart-box wide">
-              <div className="chart-box-header unified">
-                <div className="chart-controls-row">
-                  <div className="chart-title-group">
-                    <h3>Performance Analysis</h3>
-                    <span className="chart-subtitle">
-                      {kwChartView} Architecture &bull;{" "}
-                      {performanceChartData[`count${kwChartView}`]} sessions
-                    </span>
+      {/* Performance Charts Section — always rendered; overlay while EMS loads */}
+      <div className="performance-charts-section">
+        <div className="performance-charts-with-panel">
+          {/* Main Performance Chart */}
+          <div className="performance-chart-box wide">
+            <div className="chart-box-header unified">
+              <div className="chart-controls-row">
+                <div className="chart-title-group">
+                  <h3>Performance Analysis</h3>
+                  <span className="chart-subtitle">
+                    {kwChartView} Architecture &bull;{" "}
+                    {performanceChartData[`count${kwChartView}`]} sessions
+                  </span>
+                </div>
+                <div className="chart-selectors">
+                  <div className="selector-group">
+                    <span className="selector-label">Y-Axis</span>
+                    <select
+                      value={chartYAxis}
+                      onChange={(e) => {
+                        const newYAxis = e.target.value;
+                        setChartYAxis(newYAxis);
+                        if (newYAxis === "cost" && chartXAxis === "soc") {
+                          setChartXAxis("minutes");
+                        }
+                      }}
+                      className="chart-select"
+                    >
+                      <option value="kW">Power (kW)</option>
+                      <option value="kWh">Energy (kWh)</option>
+                      <option value="cost">Cost ($/kWh)</option>
+                      <option value="voltage">Voltage (V)</option>
+                      <option value="current">Current (A)</option>
+                    </select>
                   </div>
-                  <div className="chart-selectors">
-                    <div className="selector-group">
-                      <span className="selector-label">Y-Axis</span>
-                      <select
-                        value={chartYAxis}
-                        onChange={(e) => {
-                          const newYAxis = e.target.value;
-                          setChartYAxis(newYAxis);
-                          // When cost is selected and X-axis is SOC, switch to time
-                          if (newYAxis === "cost" && chartXAxis === "soc") {
-                            setChartXAxis("minutes");
-                          }
-                        }}
-                        className="chart-select"
+                  <div className="selector-group">
+                    <span className="selector-label">X-Axis</span>
+                    <select
+                      value={chartXAxis}
+                      onChange={(e) => setChartXAxis(e.target.value)}
+                      className="chart-select"
+                    >
+                      <option value="minutes">Time (min)</option>
+                      <option value="soc" disabled={chartYAxis === "cost"}>
+                        SOC (%)
+                      </option>
+                    </select>
+                  </div>
+                  <div className="selector-group">
+                    <span className="selector-label">Arch</span>
+                    <div className="arch-toggle">
+                      <button
+                        className={`arch-btn ${kwChartView === "400V" ? "active" : ""}`}
+                        onClick={() => setKwChartView("400V")}
                       >
-                        <option value="kW">Power (kW)</option>
-                        <option value="kWh">Energy (kWh)</option>
-                        <option value="cost">Cost ($/kWh)</option>
-                        <option value="voltage">Voltage (V)</option>
-                        <option value="current">Current (A)</option>
-                      </select>
-                    </div>
-                    <div className="selector-group">
-                      <span className="selector-label">X-Axis</span>
-                      <select
-                        value={chartXAxis}
-                        onChange={(e) => setChartXAxis(e.target.value)}
-                        className="chart-select"
+                        400V
+                      </button>
+                      <button
+                        className={`arch-btn accent ${kwChartView === "800V" ? "active" : ""}`}
+                        onClick={() => setKwChartView("800V")}
                       >
-                        <option value="minutes">Time (min)</option>
-                        <option value="soc" disabled={chartYAxis === "cost"}>
-                          SOC (%)
-                        </option>
-                        {/* <option value="kwh">Energy (kWh)</option> */}
-                      </select>
-                    </div>
-                    <div className="selector-group">
-                      <span className="selector-label">Arch</span>
-                      <div className="arch-toggle">
-                        <button
-                          className={`arch-btn ${kwChartView === "400V" ? "active" : ""}`}
-                          onClick={() => setKwChartView("400V")}
-                        >
-                          400V
-                        </button>
-                        <button
-                          className={`arch-btn accent ${kwChartView === "800V" ? "active" : ""}`}
-                          onClick={() => setKwChartView("800V")}
-                        >
-                          800V
-                        </button>
-                      </div>
+                        800V
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="chart-container">
-                {(() => {
-                  const chartKey = kwChartView === "400V" ? "400V" : "800V";
-                  const chartData = getChartData(
-                    chartKey,
-                    chartYAxis,
-                    chartXAxis,
-                  );
-                  const unit = getYAxisUnit(chartYAxis);
-                  const accentColor =
-                    kwChartView === "400V" ? "#22c55e" : "var(--accent)";
-                  const xAxisKey =
-                    chartXAxis === "soc"
-                      ? "soc"
-                      : chartXAxis === "kwh"
-                        ? "kwh"
-                        : "minute";
-                  const xAxisLabels = {
-                    minutes: "Minutes",
-                    soc: "SOC %",
-                    kwh: "kWh",
-                  };
-                  // Check if we're in cost mode with time x-axis (dual Y-axis mode)
-                  const isCostWithTime =
-                    chartYAxis === "cost" && chartXAxis === "minutes";
-
-                  if (chartData.sessionCount > 0) {
-                    return (
-                      <PerformanceBandChart
-                        data={chartData.chartData}
-                        unit={unit}
-                        accentColor={accentColor}
-                        sessionCount={chartData.sessionCount}
-                        colors={chartData.colors}
-                        chartLabel={`${chartYAxis} · ${kwChartView} Architecture`}
-                        xAxisKey={xAxisKey}
-                        xAxisLabel={xAxisLabels[chartXAxis] || "Minutes"}
-                        onHover={setChartInfoData}
-                        onPointClick={(d) =>
-                          setLockedChartInfo((prev) =>
-                            prev?.[xAxisKey] === d?.[xAxisKey] &&
-                            prev?.chartLabel === d?.chartLabel
-                              ? null
-                              : d,
-                          )
-                        }
-                        dualYAxis={isCostWithTime}
-                        secondaryUnit="kWh"
-                      />
-                    );
-                  }
-                  return (
-                    <div className="no-data-message">
-                      No sessions with bucket data for {kwChartView}
-                    </div>
-                  );
-                })()}
-              </div>
             </div>
 
-            {/* Shared Info Panel */}
-            <ChartInfoPanel
-              hoverData={chartInfoData}
-              lockedData={lockedChartInfo}
-              onUnlock={() => setLockedChartInfo(null)}
-            />
+            {/* Chart area with loading overlay */}
+            <div className="chart-container" style={{ position: "relative" }}>
+              {(() => {
+                const chartKey = kwChartView === "400V" ? "400V" : "800V";
+                const chartData = getChartData(chartKey, chartYAxis, chartXAxis);
+                const unit = getYAxisUnit(chartYAxis);
+                const accentColor = kwChartView === "400V" ? "#22c55e" : "var(--accent)";
+                const xAxisKey = chartXAxis === "soc" ? "soc" : chartXAxis === "kwh" ? "kwh" : "minute";
+                const isCostWithTime = chartYAxis === "cost" && chartXAxis === "minutes";
+
+                return chartData.sessionCount > 0 ? (
+                  <PerformanceBandChart
+                    data={chartData.chartData}
+                    unit={unit}
+                    accentColor={accentColor}
+                    sessionCount={chartData.sessionCount}
+                    colors={chartData.colors}
+                    chartLabel={`${chartYAxis} · ${kwChartView} Architecture`}
+                    xAxisKey={xAxisKey}
+                    xAxisLabel={{ minutes: "Minutes", soc: "SOC %", kwh: "kWh" }[chartXAxis] || "Minutes"}
+                    onHover={setChartInfoData}
+                    onPointClick={(d) =>
+                      setLockedChartInfo((prev) =>
+                        prev?.[xAxisKey] === d?.[xAxisKey] && prev?.chartLabel === d?.chartLabel ? null : d
+                      )
+                    }
+                    dualYAxis={isCostWithTime}
+                    secondaryUnit="kWh"
+                  />
+                ) : null;
+              })()}
+
+              {/* Overlay while EMS data loads */}
+              {backgroundLoading && (
+                <div className="chart-loading-overlay">
+                  <div className="chart-loading-overlay-inner">
+                    <div className="chart-loading-spinner" />
+                    <span>Loading chart data…</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Shared Info Panel */}
+          <ChartInfoPanel
+            hoverData={chartInfoData}
+            lockedData={lockedChartInfo}
+            onUnlock={() => setLockedChartInfo(null)}
+          />
         </div>
-      )}
+      </div>
 
       {/* Content Grid */}
       <div className="content-grid">
@@ -421,7 +399,12 @@ function App() {
         <section className="sessions-section">
           <div className="section-header">
             <h2>Sessions</h2>
-            <span className="session-count">{filteredData.length} results</span>
+            <span className="session-count">
+              {filteredData.length} results
+              {backgroundLoading && (
+                <span className="ems-loading-badge">chart data loading…</span>
+              )}
+            </span>
           </div>
           <div className="sessions-list">
             {paginatedData.map((session) => (
@@ -465,6 +448,7 @@ function App() {
             chartTimeRange={chartTimeRange}
             onTimeRangeChange={setChartTimeRange}
             onClose={() => setSelectedSession(null)}
+            emsLoading={backgroundLoading}
           />
         </section>
       </div>

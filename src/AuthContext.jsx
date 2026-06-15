@@ -107,38 +107,78 @@ export const AuthProvider = ({ children }) => {
       console.log("[Auth] State changed:", _event);
       setSession(newSession);
       setAuthError(null);
+
+      // When a magic-link sign-in completes, verify API access
+      if (
+        (_event === "SIGNED_IN" || _event === "TOKEN_REFRESHED") &&
+        newSession?.access_token
+      ) {
+        verifyApiAccess(newSession.access_token);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // ── login with email/password ─────────────────────────────────────────────
-  const login = useCallback(async (email, password) => {
+  // ── login with magic link (passwordless) ──────────────────────────────────
+  // Sends a one-time sign-in link to any email address. Supabase completes the
+  // session via the redirect, which the onAuthStateChange listener below picks
+  // up automatically.
+  const loginWithEmail = useCallback(async (email) => {
     setAuthError(null);
 
     const trimmedEmail = String(email || "")
       .trim()
       .toLowerCase();
-    const trimmedPassword = String(password || "");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithOtp({
       email: trimmedEmail,
-      password: trimmedPassword,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
     });
 
     if (error) {
-      console.error("[Auth] Login failed:", error.message);
+      console.error("[Auth] Magic link request failed:", error.message);
       setAuthError(error.message);
-      return null;
+      return false;
     }
 
-    console.log("[Auth] Login success:", data.user?.email);
+    console.log("[Auth] Sign-in code/link sent to:", trimmedEmail);
+    return true;
+  }, []);
+
+  // ── verify the emailed OTP code ───────────────────────────────────────────
+  // Supabase email templates can deliver a 6-digit code instead of (or in
+  // addition to) a magic link. This completes sign-in from that code.
+  const verifyOtp = useCallback(async (email, token) => {
+    setAuthError(null);
+
+    const trimmedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
+    const trimmedToken = String(token || "").trim();
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: trimmedEmail,
+      token: trimmedToken,
+      type: "email",
+    });
+
+    if (error) {
+      console.error("[Auth] OTP verification failed:", error.message);
+      setAuthError(error.message);
+      return false;
+    }
+
+    console.log("[Auth] OTP verified:", data.user?.email);
     setSession(data.session);
 
-    // Verify API access after login
-    await verifyApiAccess(data.session.access_token);
+    if (data.session?.access_token) {
+      await verifyApiAccess(data.session.access_token);
+    }
 
-    return data.session;
+    return true;
   }, []);
 
   // ── login with Google OAuth ───────────────────────────────────────────────
@@ -207,7 +247,8 @@ export const AuthProvider = ({ children }) => {
         isLoading,
         authError,
         apiAccessError,
-        login,
+        loginWithEmail,
+        verifyOtp,
         loginWithGoogle,
         logout,
         handleUnauthorized,

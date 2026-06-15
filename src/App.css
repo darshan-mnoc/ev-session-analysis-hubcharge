@@ -2,46 +2,48 @@
    HUBCHARGE DASHBOARD — REDESIGNED & MOBILE-FIRST
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap");
 
 /* ── Design Tokens ─────────────────────────────────────── */
 :root {
-  --bg-base: #080c10;
-  --bg-raised: #0f1419;
-  --bg-surface: #161d26;
-  --bg-hover: #1d2733;
-  --bg-card: #111820;
+  /* Tesla-style cool grey canvas: white cards float on a light grey page */
+  --bg-base: #f4f5f6;
+  --bg-raised: #ffffff;
+  --bg-surface: #eceef0;
+  --bg-hover: #e4e6e9;
+  --bg-card: #ffffff;
 
-  --text-primary: #eef2f7;
-  --text-secondary: #8fa3ba;
-  --text-muted: #4d6070;
+  --text-primary: #18181b;
+  --text-secondary: #52606d;
+  --text-muted: #94a1ad;
 
-  --border: rgba(255, 255, 255, 0.07);
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-accent: rgba(249, 115, 22, 0.35);
+  --hc-border: rgba(16, 24, 40, 0.09);
+  --hc-border-subtle: rgba(16, 24, 40, 0.05);
+  --hc-border-accent: rgba(249, 115, 22, 0.35);
 
   --accent: #f97316;
-  --accent-dim: rgba(249, 115, 22, 0.12);
-  --accent-glow: rgba(249, 115, 22, 0.25);
-  --green: #22c55e;
-  --green-dim: rgba(34, 197, 94, 0.12);
-  --red: #ef4444;
+  --accent-hover: #ea6c10;
+  --accent-dim: rgba(249, 115, 22, 0.1);
+  --accent-glow: rgba(249, 115, 22, 0.2);
+  --hc-border-hover: rgba(16, 24, 40, 0.16);
+  --green: #16a34a;
+  --green-dim: rgba(22, 163, 74, 0.1);
+  --red: #dc2626;
 
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --hc-radius-sm: 4px;
+  --hc-radius: 8px;
+  --hc-radius-lg: 12px;
+  --hc-radius-xl: 16px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-accent: 0 0 20px rgba(249, 115, 22, 0.15);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
+  --shadow-accent: 0 0 20px rgba(249, 115, 22, 0.12);
 
   --transition: 0.15s ease;
   --transition-md: 0.25s ease;
 
-  --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-body: "Montserrat", -apple-system, BlinkMacSystemFont, sans-serif;
+  --hc-font-mono: "DM Mono", ui-monospace, monospace;
 
   --sidebar-width: 210px;
   --header-height: 60px;
@@ -166,10 +168,45 @@ textarea {
   padding: 20px;
 }
 
+/* ── Background-loading pill (header) ──────────────────── */
+.bg-loading-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--hc-border-accent);
+  border-radius: 999px;
+}
+
+.bg-loading-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: bgLoadingPulse 1s ease-in-out infinite;
+}
+
+@keyframes bgLoadingPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .login-card {
   background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-xl);
   padding: clamp(24px, 5vw, 40px);
   width: 100%;
   max-width: 380px;
@@ -186,7 +223,7 @@ textarea {
   width: 48px;
   height: 48px;
   background: linear-gradient(135deg, var(--accent), #fb923c);
-  border-radius: var(--radius-lg);
+  border-radius: var(--hc-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,8 +267,8 @@ textarea {
   width: 100%;
   padding: 11px 14px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   color: var(--text-primary);
   font-size: 13px;
   font-family: var(--font-body);
@@ -251,7 +288,7 @@ textarea {
   padding: 11px;
   background: linear-gradient(135deg, var(--accent), #ea6c10);
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -292,7 +329,7 @@ textarea {
 .auth-loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border);
+  border: 3px solid var(--hc-border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -306,7 +343,7 @@ textarea {
 /* ── Login Form ────────────────────────────────────────── */
 .login-form-container {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   border-radius: 12px;
   padding: 40px;
   max-width: 400px;
@@ -365,7 +402,7 @@ textarea {
   width: 100%;
   padding: 12px 14px;
   background: var(--bg-base);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
@@ -428,7 +465,7 @@ textarea {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--border);
+  background: var(--hc-border);
 }
 
 .login-divider span {
@@ -439,13 +476,13 @@ textarea {
 
 .google-btn {
   background: var(--bg-base);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   color: var(--text-primary);
 }
 
 .google-btn:hover:not(:disabled) {
   background: var(--bg-hover);
-  border-color: var(--border-hover);
+  border-color: var(--hc-border-hover);
 }
 
 /* User email in header */
@@ -461,7 +498,7 @@ textarea {
 /* Logout button */
 .logout-btn-header {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   border-radius: 8px;
   padding: 8px;
   cursor: pointer;
@@ -558,7 +595,7 @@ textarea {
   background: var(--red);
   color: #fff;
   padding: 10px 18px;
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -588,7 +625,7 @@ textarea {
 .sidebar {
   width: var(--sidebar-width);
   background: var(--bg-raised);
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--hc-border);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -615,7 +652,7 @@ textarea {
 
 .sidebar-header {
   padding: 18px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .logo {
@@ -634,6 +671,14 @@ textarea {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.2px;
+}
+
+.sidebar-logo-img {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .sidebar-nav {
@@ -675,7 +720,7 @@ textarea {
 
 .sidebar-footer {
   padding: 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hc-border);
 }
 
 .refresh-btn {
@@ -686,8 +731,8 @@ textarea {
   width: 100%;
   padding: 9px;
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 500;
@@ -724,7 +769,7 @@ textarea {
   padding: 0 24px;
   height: var(--header-height);
   background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -767,8 +812,8 @@ textarea {
   align-items: center;
   gap: 8px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   padding: 0 12px;
   height: 34px;
   width: 200px;
@@ -814,8 +859,8 @@ textarea {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   background: var(--bg-surface);
   color: var(--text-secondary);
   cursor: pointer;
@@ -839,7 +884,7 @@ textarea {
    ============================================================ */
 .filters-section {
   padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   background: var(--bg-raised);
 }
 
@@ -874,7 +919,7 @@ textarea {
   padding: 7px 14px;
   background: var(--accent);
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -966,8 +1011,8 @@ textarea {
   width: 100%;
   padding: 7px 10px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   color: var(--text-primary);
   font-size: 12px;
   font-family: var(--font-body);
@@ -999,8 +1044,8 @@ textarea {
   align-items: center;
   gap: 5px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   padding: 0 8px;
   height: 33px;
   transition: border-color var(--transition);
@@ -1021,7 +1066,7 @@ textarea {
   font-weight: 500;
   text-align: center;
   outline: none;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .range-input::placeholder {
@@ -1081,15 +1126,15 @@ textarea {
 }
 
 .date-input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.4;
+  filter: none;
+  opacity: 0.45;
   cursor: pointer;
   width: 12px;
   height: 12px;
 }
 
 .date-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 /* ── Price / SOC stepper ───────────────────────────────── */
@@ -1114,8 +1159,8 @@ textarea {
   align-items: center;
   justify-content: center;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-sm);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -1166,8 +1211,8 @@ textarea {
   display: flex;
   align-items: center;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-sm);
   padding: 0 10px;
   height: 36px;
   min-width: 70px;
@@ -1196,7 +1241,7 @@ textarea {
   font-weight: 600;
   text-align: center;
   outline: none;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .price-input::placeholder,
@@ -1246,7 +1291,7 @@ textarea {
    ============================================================ */
 .stats-dashboard {
   background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   padding: 16px 24px;
   display: flex;
   flex-direction: column;
@@ -1266,8 +1311,8 @@ textarea {
 /* ── Stat Card ─────────────────────────────────────────── */
 .stat-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -1278,7 +1323,7 @@ textarea {
 }
 
 .stat-card:hover {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(15, 23, 42, 0.12);
 }
 
 .stat-card.primary {
@@ -1287,7 +1332,7 @@ textarea {
     rgba(249, 115, 22, 0.1) 0%,
     rgba(249, 115, 22, 0.04) 100%
   );
-  border-color: var(--border-accent);
+  border-color: var(--hc-border-accent);
 }
 
 .stat-card.primary:hover {
@@ -1331,7 +1376,7 @@ textarea {
   color: var(--accent);
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 /* Architecture Breakdown */
@@ -1347,7 +1392,7 @@ textarea {
   align-items: center;
   padding: 7px 12px;
   background: var(--bg-hover);
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   min-width: 70px;
   gap: 1px;
 }
@@ -1372,7 +1417,7 @@ textarea {
   font-size: 17px;
   font-weight: 700;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .arch-stat.accent .arch-percent {
@@ -1392,13 +1437,13 @@ textarea {
   grid-template-columns: 48px repeat(3, 1fr);
   gap: 8px;
   padding: 6px 8px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
   align-items: center;
 }
 
 .stat-table-row.header {
   padding-bottom: 5px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .stat-table-row.header span {
@@ -1417,14 +1462,14 @@ textarea {
 
 .stat-table-row.highlight {
   background: rgba(249, 115, 22, 0.07);
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
 }
 
 .arch-label {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .arch-label.accent {
@@ -1458,7 +1503,7 @@ textarea {
 }
 
 .duration-row.total {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hc-border);
   padding-top: 8px;
   margin-top: 2px;
 }
@@ -1514,7 +1559,7 @@ textarea {
   align-items: center;
   padding: 6px 8px;
   background: var(--bg-hover);
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
 }
 
 .arch-tag {
@@ -1525,7 +1570,7 @@ textarea {
   background: var(--bg-surface);
   color: var(--text-secondary);
   text-align: center;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .arch-tag.accent {
@@ -1610,7 +1655,7 @@ textarea {
 .tooltip-row.total {
   margin-top: 4px;
   padding-top: 6px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hc-border);
   font-weight: 600;
 }
 
@@ -1643,7 +1688,7 @@ textarea {
 .loading-spinner.small {
   width: 16px;
   height: 16px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--hc-border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -1674,7 +1719,7 @@ textarea {
 .billing-table-row.header {
   padding: 10px 16px;
   background: var(--bg-surface);
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: var(--hc-radius) var(--hc-radius) 0 0;
   font-size: 10px;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -1696,7 +1741,7 @@ textarea {
 
 .billing-table-row.data {
   background: var(--bg-hover);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--hc-border-subtle);
 }
 
 .billing-table-row.data:last-of-type {
@@ -1707,8 +1752,8 @@ textarea {
   margin-top: 2px;
   padding: 14px 16px;
   background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%);
-  border-radius: 0 0 var(--radius) var(--radius);
-  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--hc-radius) var(--hc-radius);
+  border-top: 1px solid var(--hc-border);
   font-weight: 600;
 }
 
@@ -1736,7 +1781,7 @@ textarea {
 }
 
 .billing-table-row .value {
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 500;
@@ -1783,8 +1828,8 @@ textarea {
   gap: 12px;
   padding: 16px 20px;
   background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  border-radius: var(--hc-radius-lg);
+  border: 1px solid var(--hc-border);
   min-width: 180px;
 }
 
@@ -1797,7 +1842,7 @@ textarea {
 .billing-metric.highlight {
   margin-top: 6px;
   padding-top: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hc-border);
 }
 
 .metric-label {
@@ -1811,7 +1856,7 @@ textarea {
 .metric-value {
   font-size: 20px;
   font-weight: 700;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   color: var(--text-primary);
 }
 
@@ -1847,7 +1892,7 @@ textarea {
    ============================================================ */
 .performance-charts-section {
   background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   padding: 16px 24px;
 }
 
@@ -1870,8 +1915,8 @@ textarea {
 
 .performance-chart-box {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -1965,7 +2010,7 @@ textarea {
 .chart-select {
   padding: 5px 8px;
   background: var(--bg-base);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   border-radius: 6px;
   color: var(--text-primary);
   font-size: 11px;
@@ -1975,7 +2020,7 @@ textarea {
 }
 
 .chart-select:hover {
-  border-color: var(--border-hover);
+  border-color: var(--hc-border-hover);
   background: var(--bg-hover);
 }
 
@@ -1991,7 +2036,7 @@ textarea {
   background: var(--bg-base);
   padding: 2px;
   border-radius: 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
 }
 
 .arch-btn {
@@ -2031,7 +2076,7 @@ textarea {
   gap: 3px;
   background: var(--bg-hover);
   padding: 3px;
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   flex-wrap: wrap;
 }
 
@@ -2044,7 +2089,7 @@ textarea {
   font-size: 10px;
   font-weight: 600;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
@@ -2093,7 +2138,7 @@ svg:focus {
 
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: var(--border) !important;
+  stroke: var(--hc-border) !important;
 }
 
 .recharts-legend-item-text {
@@ -2104,8 +2149,8 @@ svg:focus {
 /* ── Chart Info Panel ──────────────────────────────────── */
 .chart-info-panel {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -2165,10 +2210,10 @@ svg:focus {
 }
 .cip-unlock-btn {
   background: var(--accent-dim);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   color: var(--accent);
   padding: 6px 12px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -2200,7 +2245,7 @@ svg:focus {
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 .cip-car-count {
   display: flex;
@@ -2219,8 +2264,8 @@ svg:focus {
   align-items: center;
   gap: 8px;
   padding: 5px 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: var(--hc-radius-sm);
   margin-bottom: 5px;
 }
 
@@ -2285,7 +2330,7 @@ svg:focus {
 .cip-kwh {
   font-size: 11px;
   font-weight: 500;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   width: 45px;
   text-align: right;
 }
@@ -2304,14 +2349,14 @@ svg:focus {
   align-items: center;
   gap: 8px;
   padding: 5px 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.02);
+  border-radius: var(--hc-radius-sm);
   font-size: 12px;
   transition: background var(--transition);
 }
 
 .cip-session-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.05);
 }
 .cip-dot {
   width: 6px;
@@ -2322,7 +2367,7 @@ svg:focus {
 .cip-id {
   flex: 1;
   color: var(--text-secondary);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   font-size: 10px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2331,7 +2376,7 @@ svg:focus {
 
 .cip-duration {
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   font-size: 11px;
   width: 50px;
   text-align: right;
@@ -2359,7 +2404,7 @@ svg:focus {
 
 .cip-time {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   font-size: 11px;
   width: 50px;
   text-align: right;
@@ -2372,7 +2417,7 @@ svg:focus {
   flex-shrink: 0;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   font-size: 12px;
   width: 55px;
   text-align: right;
@@ -2383,7 +2428,7 @@ svg:focus {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hc-border);
   padding-top: 8px;
   margin-top: auto;
 }
@@ -2395,9 +2440,9 @@ svg:focus {
   align-items: center;
   justify-content: center;
   background: var(--bg-hover);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   color: var(--text-primary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
   font-size: 14px;
   cursor: pointer;
   transition: all var(--transition);
@@ -2426,8 +2471,8 @@ svg:focus {
   align-items: center;
   gap: 6px;
   background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   padding: 6px 10px;
   font-size: 11px;
   color: var(--text-primary);
@@ -2464,7 +2509,7 @@ svg:focus {
 /* Enhanced chart tooltip */
 .chart-tooltip-enhanced {
   background: var(--bg-raised);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   border-radius: 8px;
   padding: 10px 12px;
   box-shadow: var(--shadow-lg);
@@ -2477,7 +2522,7 @@ svg:focus {
   align-items: center;
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .tooltip-x-label {
@@ -2497,13 +2542,13 @@ svg:focus {
 .tooltip-time-range {
   margin-bottom: 6px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .tooltip-time-range .time-range-label {
   font-size: 10px;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .tooltip-main-stats {
@@ -2535,7 +2580,7 @@ svg:focus {
   font-size: 10px;
   color: var(--text-secondary);
   padding-top: 6px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px dashed var(--hc-border);
 }
 
 /* Dual Y-Axis Tooltip Styles */
@@ -2558,7 +2603,7 @@ svg:focus {
   text-transform: uppercase;
   letter-spacing: 0.3px;
   padding-bottom: 2px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   margin-bottom: 2px;
 }
 
@@ -2606,7 +2651,7 @@ svg:focus {
 .session-card {
   background: var(--bg-card);
   border: 1px solid transparent;
-  border-radius: var(--radius-lg);
+  border-radius: var(--hc-radius-lg);
   padding: 13px;
   cursor: pointer;
   transition: all var(--transition);
@@ -2618,8 +2663,8 @@ svg:focus {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
+  border-radius: var(--hc-radius-lg);
+  border: 1px solid var(--hc-border-subtle);
   pointer-events: none;
   transition: border-color var(--transition);
 }
@@ -2630,7 +2675,7 @@ svg:focus {
 }
 
 .session-card:hover::before {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(15, 23, 42, 0.08);
 }
 
 .session-card.selected {
@@ -2662,7 +2707,7 @@ svg:focus {
 .session-id {
   font-size: 12px;
   font-weight: 600;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   color: var(--text-primary);
 }
 
@@ -2673,7 +2718,7 @@ svg:focus {
   border-radius: 3px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.05);
   color: var(--text-muted);
 }
 
@@ -2730,7 +2775,7 @@ svg:focus {
   font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .metric-unit {
@@ -2742,7 +2787,7 @@ svg:focus {
   display: flex;
   gap: 20px;
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(15, 23, 42, 0.04);
   margin-bottom: 8px;
 }
 
@@ -2761,7 +2806,7 @@ svg:focus {
   font-weight: 600;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .stat-10min-unit {
@@ -2791,7 +2836,7 @@ svg:focus {
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(15, 23, 42, 0.04);
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -2843,7 +2888,7 @@ svg:focus {
   gap: 4px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hc-border);
   flex-wrap: wrap;
 }
 
@@ -2854,8 +2899,8 @@ svg:focus {
   align-items: center;
   justify-content: center;
   background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-sm);
   color: var(--text-muted);
   cursor: pointer;
   transition: all var(--transition);
@@ -2887,7 +2932,7 @@ svg:focus {
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--hc-radius-sm);
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
@@ -2938,8 +2983,8 @@ svg:focus {
    ============================================================ */
 .chart-panel {
   background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
   padding: 18px;
   min-height: 560px;
 }
@@ -2950,7 +2995,7 @@ svg:focus {
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .chart-header h2 {
@@ -2960,7 +3005,7 @@ svg:focus {
 .chart-subtitle {
   font-size: 10px;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
   margin-top: 3px;
 }
 
@@ -2971,8 +3016,8 @@ svg:focus {
   align-items: center;
   justify-content: center;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-sm);
   color: var(--text-muted);
   cursor: pointer;
   transition: all var(--transition);
@@ -3002,7 +3047,7 @@ svg:focus {
 
 .detail-item {
   background: var(--bg-surface);
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   padding: 9px 11px;
 }
 
@@ -3087,7 +3132,7 @@ svg:focus {
   gap: 10px;
   padding: 10px 14px;
   background: var(--bg-surface);
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   margin-bottom: 12px;
   flex-wrap: wrap;
 }
@@ -3121,7 +3166,7 @@ svg:focus {
   font-size: 13px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 
 .dh-value.accent {
@@ -3158,8 +3203,8 @@ svg:focus {
 .time-btn {
   padding: 5px 9px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-sm);
   color: var(--text-muted);
   font-size: 10px;
   font-family: var(--font-body);
@@ -3192,7 +3237,7 @@ svg:focus {
 
 .chart-card {
   background: var(--bg-surface);
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   padding: 14px;
 }
 
@@ -3215,8 +3260,8 @@ svg:focus {
 /* Tooltip */
 .chart-tooltip {
   background: var(--bg-raised) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
+  border: 1px solid var(--hc-border) !important;
+  border-radius: var(--hc-radius) !important;
   padding: 9px 11px !important;
   box-shadow: var(--shadow-md) !important;
 }
@@ -3226,7 +3271,7 @@ svg:focus {
   color: var(--text-muted);
   margin-bottom: 5px;
   padding-bottom: 5px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .tooltip-content {
@@ -3325,8 +3370,8 @@ svg:focus {
 /* Performance Tooltip */
 .perf-tooltip {
   background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
   padding: 12px;
   min-width: 200px;
   max-width: 280px;
@@ -3339,7 +3384,7 @@ svg:focus {
   align-items: center;
   padding-bottom: 8px;
   margin-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
 }
 
 .perf-tooltip-minute {
@@ -4240,8 +4285,8 @@ svg:focus {
   justify-content: center;
   width: 33px;
   height: 33px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius);
   background: var(--bg-raised);
   color: var(--text-secondary);
   cursor: pointer;
@@ -4282,7 +4327,7 @@ svg:focus {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -4317,7 +4362,7 @@ svg:focus {
 .user-info-item {
   cursor: default !important;
   opacity: 0.8;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   margin-bottom: 8px;
   padding-bottom: 12px !important;
 }
@@ -4431,7 +4476,7 @@ svg:focus {
   }
 
   .stat-card:hover {
-    border-color: var(--border);
+    border-color: var(--hc-border);
   }
 
   /* Active states for touch */
@@ -4528,7 +4573,7 @@ svg:focus {
    ============================================================ */
 .metrics-section {
   background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hc-border);
   padding: 16px 24px;
 }
 
@@ -4540,8 +4585,8 @@ svg:focus {
 
 .metric-card {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -4554,7 +4599,7 @@ svg:focus {
 }
 
 .metric-card:hover {
-  border-color: var(--border-accent);
+  border-color: var(--hc-border-accent);
   transform: translateY(-1px);
 }
 .metric-card.highlight,
@@ -4564,7 +4609,7 @@ svg:focus {
     rgba(249, 115, 22, 0.1) 0%,
     rgba(249, 115, 22, 0.04) 100%
   );
-  border-color: var(--border-accent);
+  border-color: var(--hc-border-accent);
 }
 
 .metric-icon {
@@ -4574,7 +4619,7 @@ svg:focus {
   align-items: center;
   justify-content: center;
   background: var(--bg-base);
-  border-radius: var(--radius);
+  border-radius: var(--hc-radius);
   margin-bottom: 2px;
 }
 
@@ -4598,7 +4643,7 @@ svg:focus {
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
-  font-family: var(--font-mono);
+  font-family: var(--hc-font-mono);
 }
 .metric-card.highlight .metric-number,
 .metric-card.accent-card .metric-number {
@@ -4625,12 +4670,226 @@ svg:focus {
   border-radius: 10px;
   background: var(--bg-base);
   color: var(--text-muted);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hc-border);
   margin-bottom: 2px;
 }
 
 .metric-badge.accent {
   background: var(--accent-dim);
   color: var(--accent);
-  border-color: var(--border-accent);
+  border-color: var(--hc-border-accent);
+}
+
+/* ============================================================
+   TESLA-STYLE NEUTRAL OVERRIDES
+   Data values render near-black; orange reserved for primary
+   actions, active nav, focus rings, and progress.
+   ============================================================ */
+.stat-main-value,
+.session-value,
+.metric-value.session,
+.duration-value.accent,
+.stat-value.accent,
+.stat-value-secondary.accent,
+.stat-table-row .value.accent,
+.arch-stat.accent .arch-count,
+.arch-stat.accent .arch-percent {
+  color: var(--text-primary);
+}
+
+/* Neutral chips/tags instead of orange-tinted */
+.arch-tag.accent,
+.metric-badge.accent {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-color: var(--hc-border);
+}
+
+/* Soften the lightning/energy glyphs that were pure orange */
+.metric-icon svg,
+.session-metric svg {
+  color: var(--text-muted);
+}
+
+/* White cards float on the grey canvas with a soft shadow */
+.stat-card,
+.session-card,
+.chart-panel,
+.performance-chart-box,
+.chart-info-panel {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.performance-charts-section .performance-chart-box.wide {
+  background: var(--bg-card);
+}
+
+/* Header sits flush on the canvas with a hairline divider */
+.main-header {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Session list spacing for the rebuilt cards */
+.sessions-list {
+  gap: 12px;
+  padding: 2px 4px 2px 2px;
+}
+
+/* ── Neutralize stats orange tints (sparing-accent / minimalist) ─────────── */
+.stat-card.primary {
+  background: var(--bg-card);
+  border-color: var(--hc-border);
+}
+
+.arch-stat.accent {
+  background: var(--bg-surface);
+}
+
+.stat-table-row.highlight {
+  background: var(--bg-surface);
+}
+
+/* Section-header icons read as quiet grey, not orange */
+.stat-icon,
+.stat-icon.accent,
+.stat-icon svg {
+  color: var(--text-secondary);
+}
+
+/* Prevent grid/flex children (e.g. Recharts) from forcing horizontal overflow */
+.content-grid > *,
+.performance-charts-with-panel > * {
+  min-width: 0;
+}
+
+
+/* ── EMS loading skeletons ──────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.skeleton-line,
+.skeleton-bar {
+  background: linear-gradient(90deg, #eceef0 25%, #e4e6e9 50%, #eceef0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* Performance chart skeleton */
+.perf-chart-skeleton {
+  margin: 0 24px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
+  padding: 24px 28px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.perf-chart-skeleton-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 140px;
+}
+
+.skeleton-bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  min-width: 20px;
+  background: linear-gradient(90deg, #eceef0 25%, #e4e6e9 50%, #eceef0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.perf-chart-skeleton-label {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+/* Chart panel skeleton */
+.chart-panel-skeleton {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--hc-border);
+  border-radius: var(--hc-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-panel-skeleton .skeleton-bars {
+  flex: 1;
+}
+
+.chart-panel-skeleton-hint {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+/* "chart data loading" badge next to session count */
+.ems-loading-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--hc-border);
+  letter-spacing: 0.01em;
+}
+
+/* ── Chart loading overlay ───────────────────────────────── */
+.chart-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--hc-radius-lg);
+  z-index: 10;
+}
+
+.chart-loading-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.chart-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--bg-surface);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }

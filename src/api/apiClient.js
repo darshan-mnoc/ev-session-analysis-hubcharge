@@ -203,19 +203,28 @@ export const endpoints = {
 // ============ API Service Functions ============
 // Pre-built functions for common API calls
 
+// Page size matches the working portal call (?limit=500&page=N).
+const PAGE_SIZE = 500;
+const TIMEZONE = "America/Los_Angeles";
+
 export const sessionApi = {
   /**
-   * Fetch mini view data (session summaries)
+   * Fetch the full mini_view dataset (session summaries) using page-based
+   * pagination. `onPage(rows, total)` streams each page as it arrives.
    */
-  async getMiniView(range = "year", onProgress = null) {
-    return fetchAllDataAdaptive(endpoints.miniView, { range }, onProgress);
+  async getMiniView(range = "year", { onProgress = null, onPage = null } = {}) {
+    return fetchAllPages(
+      endpoints.miniView,
+      { range, timezone: TIMEZONE },
+      { onProgress, onPage },
+    );
   },
 
   /**
-   * Fetch EMS transactions
+   * Fetch the full EMS transactions dataset using page-based pagination.
    */
-  async getEmsTransactions(onProgress = null) {
-    return fetchAllDataAdaptive(endpoints.emsTransactions, {}, onProgress);
+  async getEmsTransactions({ onProgress = null, onPage = null } = {}) {
+    return fetchAllPages(endpoints.emsTransactions, {}, { onProgress, onPage });
   },
 };
 
@@ -234,161 +243,56 @@ function parseResponseData(response) {
 }
 
 /**
- * Fetch all data by finding the max working limit
- * API only works when limit <= actual record count
- * Uses binary search after initial probe to minimize API calls
+ * Fetch one page. Returns { ok, rows }.
  */
-// async function fetchAllDataAdaptive(endpoint, baseParams = {}, onProgress = null) {
-//   if (onProgress) onProgress("Loading...");
-
-//   // Step 1: Try 200 first
-//   let result = await tryFetchWithLimit(endpoint, baseParams, 200, onProgress);
-//   if (!result.success) {
-//     return [];
-//   }
-
-//   let lastGoodData = result.data;
-//   let lastGoodLimit = 200;
-
-//   // Step 2: Try 400
-//   result = await tryFetchWithLimit(endpoint, baseParams, 400, onProgress);
-//   if (result.success) {
-//     lastGoodData = result.data;
-//     lastGoodLimit = 400;
-
-//     // Step 3: Try 600
-//     result = await tryFetchWithLimit(endpoint, baseParams, 600, onProgress);
-//     if (result.success) {
-//       lastGoodData = result.data;
-//       lastGoodLimit = 600;
-
-//       // Continue with bigger jumps
-//       for (let limit = 800; limit <= 5000; limit += 200) {
-//         result = await tryFetchWithLimit(endpoint, baseParams, limit, onProgress);
-//         if (result.success) {
-//           lastGoodData = result.data;
-//           lastGoodLimit = limit;
-//         } else {
-//           break;
-//         }
-//       }
-//     }
-//   }
-
-//   // Step 4: Refine - try increments of 50 from lastGoodLimit
-//   for (let limit = lastGoodLimit + 50; limit < lastGoodLimit + 200; limit += 50) {
-//     result = await tryFetchWithLimit(endpoint, baseParams, limit, onProgress);
-//     if (result.success) {
-//       lastGoodData = result.data;
-//     } else {
-//       break;
-//     }
-//   }
-
-//   console.log(`✓ Fetched ${lastGoodData.length} records`);
-//   return lastGoodData;
-// }
-
-/**
- * Fetch all data using cascading step-down refinement.
- *
- * Steps: [200, 100, 50, 40, 30, 20, 10, 5, 1]
- * - If probe succeeds → advance lastGood, retry same step
- * - If probe fails    → record ceiling, shrink step, retry from lastGood
- * - Skip any probe that would hit/exceed a known ceiling (saves calls)
- *
- * Example for ~394 records:
- *   step=200: 200✓ 400✗           → lastGood=200, ceil=400
- *   step=100: 300✓ skip(400≥ceil) → lastGood=300
- *   step= 50: 350✓ skip(400≥ceil) → lastGood=350
- *   step= 40: 390✓ skip(430>ceil) → lastGood=390
- *   step= 30: skip(420>ceil)
- *   step= 20: skip(410>ceil)
- *   step= 10: skip(400≥ceil)
- *   step=  5: 395✗               → ceil=395
- *   step=  1: 391✓ 392✓ 393✓ 394✓ skip(395≥ceil)
- *   ✓ 394 records in ~10 API calls
- */
-async function fetchAllDataAdaptive(
-  endpoint,
-  baseParams = {},
-  onProgress = null,
-) {
-  if (onProgress) onProgress("Loading...");
-
-  // const STEPS = [200, 100, 50, 40, 30, 20, 10, 5, 1];
-  const STEPS = [200, 100, 50];
-
-  // ── Initial probe ────────────────────────────────────────────────────────
-  const initial = await tryFetchWithLimit(
-    endpoint,
-    baseParams,
-    STEPS[0],
-    onProgress,
-  );
-  if (!initial.success) {
-    console.warn(
-      "Initial probe at 200 failed — dataset may be empty or API error.",
-    );
-    return [];
+async function fetchPage(endpoint, baseParams, page) {
+  try {
+    const response = await apiClient.get(endpoint, {
+      ...baseParams,
+      limit: PAGE_SIZE,
+      page,
+    });
+    return { ok: true, rows: parseResponseData(response) };
+  } catch {
+    return { ok: false, rows: [] };
   }
-
-  let lastGoodData = initial.data;
-  let lastGoodLimit = STEPS[0]; // 200
-  let ceilLimit = 500; // lowest known failing limit
-
-  // ── Cascading refinement ─────────────────────────────────────────────────
-  for (const step of STEPS) {
-    // Keep probing with this step until we hit the ceiling
-    while (true) {
-      const next = lastGoodLimit + step;
-
-      // Skip — we already know this limit (or higher) fails
-      if (next >= ceilLimit) break;
-
-      const result = await tryFetchWithLimit(
-        endpoint,
-        baseParams,
-        next,
-        onProgress,
-      );
-
-      if (result.success) {
-        lastGoodData = result.data;
-        lastGoodLimit = next;
-        // Continue with same step (maybe there's more room)
-      } else {
-        ceilLimit = next; // tighten the ceiling for all future steps too
-        break; // shrink step
-      }
-    }
-
-    // Once the gap is closed, no finer steps can help
-    if (ceilLimit - lastGoodLimit <= 1) break;
-  }
-
-  console.log(`✓ Fetched ${lastGoodData.length} records in exact mode`);
-  return lastGoodData;
 }
 
 /**
- * Try to fetch with a specific limit, returns { success, data }
+ * Fetch every page with `?limit=500&page=N` (the scheme the portal uses).
+ *
+ * - Streams each page to `onPage(rows, total)` so callers render immediately.
+ * - Stops when a page returns fewer than PAGE_SIZE rows (the last page).
+ * - `onProgress` gets { count, fraction } to drive a progress bar.
  */
-async function tryFetchWithLimit(
+async function fetchAllPages(
   endpoint,
-  baseParams,
-  limit,
-  onProgress = null,
+  baseParams = {},
+  { onProgress = null, onPage = null } = {},
 ) {
-  try {
-    // if (onProgress) onProgress(`Trying ${limit}...`);
-    const params = { ...baseParams, limit, offset: 0 };
-    const response = await apiClient.get(endpoint, params);
-    const data = parseResponseData(response);
-    return { success: data.length > 0, data };
-  } catch {
-    return { success: false, data: [] };
+  const all = [];
+  let page = 1;
+
+  // Hard cap so a misbehaving endpoint can never loop forever.
+  while (page <= 100) {
+    const { ok, rows } = await fetchPage(endpoint, baseParams, page);
+    if (!ok || rows.length === 0) break;
+
+    all.push(...rows);
+    if (onPage) onPage(rows, all.length);
+    if (onProgress) {
+      // Last page → 1; otherwise edge toward completion as pages accrue.
+      const fraction = rows.length < PAGE_SIZE ? 1 : Math.min(0.9, page / 6);
+      onProgress({ count: all.length, fraction });
+    }
+
+    if (rows.length < PAGE_SIZE) break; // last page
+    page += 1;
   }
+
+  if (onProgress) onProgress({ count: all.length, fraction: 1 });
+  console.log(`✓ Fetched ${all.length} records (${page} page[s])`);
+  return all;
 }
 
 export default apiClient;

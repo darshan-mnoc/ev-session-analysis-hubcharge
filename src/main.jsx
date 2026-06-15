@@ -7,7 +7,6 @@ import Layout from "./Layout.jsx";
 import "./index.css";
 import App from "./App.jsx";
 import Calculator from "./Calculator.jsx";
-import FinancialInsights from "./FinancialInsights.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -17,7 +16,7 @@ createRoot(document.getElementById("root")).render(
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/calculator" element={<Calculator />} />
-            <Route path="/financial" element={<FinancialInsights />} />
+            {/* <Route path="/financial" element={<FinancialInsights />} /> */}
           </Routes>
         </Layout>
       </BrowserRouter>

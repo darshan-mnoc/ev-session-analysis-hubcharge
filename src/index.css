@@ -1,6 +1,112 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ── shadcn design tokens — pure white theme, HubCharge orange ────────────── */
+:root {
+  --radius: 0.625rem;
+
+  /* Cool grey canvas — white cards float on a light grey page */
+  --background: #f4f5f6;
+  --foreground: #18181b;
+
+  --card: #ffffff;
+  --card-foreground: #18181b;
+
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+
+  /* HubCharge orange (used sparingly) */
+  --primary: #f97316;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eceef0;
+  --secondary-foreground: #2b3540;
+
+  --muted: #eceef0;
+  --muted-foreground: #52606d;
+
+  /* shadcn "accent" (subtle hover surface) — namespaced to avoid clashing with
+     the legacy brand --accent (orange) used throughout App.css */
+  --ui-accent: #eceef0;
+  --ui-accent-foreground: #2b3540;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #e4e6e9;
+  --input: #e4e6e9;
+  --ring: #f97316;
+
+  --chart-1: oklch(0.705 0.193 47.6);
+  --chart-2: oklch(0.7 0.16 150);
+  --chart-3: oklch(0.6 0.13 250);
+  --chart-4: oklch(0.75 0.15 90);
+  --chart-5: oklch(0.65 0.2 320);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.205 0.02 260);
+  --sidebar-primary: oklch(0.705 0.193 47.6);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0.02 60);
+  --sidebar-accent-foreground: oklch(0.255 0.02 260);
+  --sidebar-border: oklch(0.922 0.008 260);
+  --sidebar-ring: oklch(0.705 0.193 47.6);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--ui-accent);
+  --color-accent-foreground: var(--ui-accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+}
+
+/* ── base resets ─────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -12,9 +118,9 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0f172a;
-  color: #f8fafc;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  color: #0f172a;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -25,14 +131,12 @@ body {
   min-height: 100vh;
 }
 
-/* Selection */
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: #f8fafc;
+  background: rgba(249, 115, 22, 0.25);
+  color: #0f172a;
 }
 
-/* Focus visible */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #f97316;
   outline-offset: 2px;
 }

@@ -81,7 +81,7 @@ const ChartCard = ({
             </defs>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#334155"
+              stroke="#e2e8f0"
               vertical={false}
             />
             <XAxis
@@ -128,7 +128,7 @@ const ChartCard = ({
               activeDot={{
                 r: 6,
                 fill: color,
-                stroke: "#1e293b",
+                stroke: "#ffffff",
                 strokeWidth: 2,
               }}
               name={`${dataKey.replace(/([A-Z])/g, " $1").trim()} (${unit})`}
@@ -144,7 +144,7 @@ const ChartCard = ({
                 activeDot={{
                   r: 6,
                   fill: secondaryColor,
-                  stroke: "#1e293b",
+                  stroke: "#ffffff",
                   strokeWidth: 2,
                 }}
                 name={`${secondaryDataKey.replace(/([A-Z])/g, " $1").trim()} (${secondaryUnit})`}
