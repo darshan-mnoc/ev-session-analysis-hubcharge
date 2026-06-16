@@ -4,40 +4,39 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── shadcn design tokens — pure white theme, HubCharge orange ────────────── */
+/* ── shadcn design tokens — HubCharge BESS Simulator design language ───────── */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  /* Cool grey canvas — white cards float on a light grey page */
-  --background: #f4f5f6;
-  --foreground: #18181b;
+  /* White canvas — matches hc-cost-simulator.vercel.app */
+  --background: #ffffff;
+  --foreground: #09090b;
 
   --card: #ffffff;
-  --card-foreground: #18181b;
+  --card-foreground: #09090b;
 
   --popover: #ffffff;
-  --popover-foreground: #18181b;
+  --popover-foreground: #09090b;
 
-  /* HubCharge orange (used sparingly) */
+  /* HubCharge orange */
   --primary: #f97316;
   --primary-foreground: #ffffff;
 
-  --secondary: #eceef0;
-  --secondary-foreground: #2b3540;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #09090b;
 
-  --muted: #eceef0;
-  --muted-foreground: #52606d;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
 
-  /* shadcn "accent" (subtle hover surface) — namespaced to avoid clashing with
-     the legacy brand --accent (orange) used throughout App.css */
-  --ui-accent: #eceef0;
-  --ui-accent-foreground: #2b3540;
+  /* shadcn "accent" (subtle hover surface) */
+  --ui-accent: #f4f4f5;
+  --ui-accent-foreground: #09090b;
 
-  --destructive: #dc2626;
+  --destructive: #d32222;
   --destructive-foreground: #ffffff;
 
-  --border: #e4e6e9;
-  --input: #e4e6e9;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
   --ring: #f97316;
 
   --chart-1: oklch(0.705 0.193 47.6);

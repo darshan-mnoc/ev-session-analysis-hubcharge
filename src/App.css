@@ -5,39 +5,39 @@
 
 /* ── Design Tokens ─────────────────────────────────────── */
 :root {
-  /* Tesla-style cool grey canvas: white cards float on a light grey page */
-  --bg-base: #f4f5f6;
+  /* HubCharge BESS Simulator design language — white canvas, zinc neutrals */
+  --bg-base: #ffffff;
   --bg-raised: #ffffff;
-  --bg-surface: #eceef0;
-  --bg-hover: #e4e6e9;
+  --bg-surface: #f4f4f5;
+  --bg-hover: #e4e4e7;
   --bg-card: #ffffff;
 
-  --text-primary: #18181b;
-  --text-secondary: #52606d;
-  --text-muted: #94a1ad;
+  --text-primary: #09090b;
+  --text-secondary: #71717a;
+  --text-muted: #94a3b8;
 
-  --hc-border: rgba(16, 24, 40, 0.09);
-  --hc-border-subtle: rgba(16, 24, 40, 0.05);
+  --hc-border: #e4e4e7;
+  --hc-border-subtle: rgba(228, 228, 231, 0.6);
   --hc-border-accent: rgba(249, 115, 22, 0.35);
 
   --accent: #f97316;
   --accent-hover: #ea6c10;
   --accent-dim: rgba(249, 115, 22, 0.1);
   --accent-glow: rgba(249, 115, 22, 0.2);
-  --hc-border-hover: rgba(16, 24, 40, 0.16);
-  --green: #16a34a;
-  --green-dim: rgba(22, 163, 74, 0.1);
-  --red: #dc2626;
+  --hc-border-hover: #cbd5e1;
+  --green: #16a249;
+  --green-dim: rgba(22, 162, 73, 0.1);
+  --red: #d32222;
 
-  --hc-radius-sm: 4px;
-  --hc-radius: 8px;
-  --hc-radius-lg: 12px;
+  --hc-radius-sm: 3px;
+  --hc-radius: 9px;
+  --hc-radius-lg: 16px;
   --hc-radius-xl: 16px;
 
-  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.08);
-  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12);
-  --shadow-accent: 0 0 20px rgba(249, 115, 22, 0.12);
+  --shadow-sm: rgba(0, 0, 0, 0.06) 0px 1px 3px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.15) 0px 8px 24px 0px;
+  --shadow-lg: rgba(0, 0, 0, 0.35) 0px 24px 60px 0px;
+  --shadow-accent: rgba(249, 115, 22, 0.25) 0px 8px 20px 0px;
 
   --transition: 0.15s ease;
   --transition-md: 0.25s ease;
@@ -206,7 +206,7 @@ textarea {
 .login-card {
   background: var(--bg-raised);
   border: 1px solid var(--hc-border);
-  border-radius: var(--hc-radius-xl);
+  border-radius: var(--hc-radius-lg);
   padding: clamp(24px, 5vw, 40px);
   width: 100%;
   max-width: 380px;
@@ -239,7 +239,7 @@ textarea {
 
 .login-header h1 {
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 800;
   margin-bottom: 5px;
   color: var(--text-primary);
 }
@@ -626,6 +626,7 @@ textarea {
   width: var(--sidebar-width);
   background: var(--bg-raised);
   border-right: 1px solid var(--hc-border);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -695,7 +696,7 @@ textarea {
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all var(--transition);
   border-radius: 0;
   cursor: pointer;
@@ -710,6 +711,7 @@ textarea {
   color: var(--accent);
   background: var(--accent-dim);
   border-right: 2px solid var(--accent);
+  font-weight: 800;
 }
 
 .nav-item svg {
@@ -770,6 +772,7 @@ textarea {
   height: var(--header-height);
   background: var(--bg-raised);
   border-bottom: 1px solid var(--hc-border);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -785,7 +788,7 @@ textarea {
 
 .header-left h1 {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.3px;
   white-space: nowrap;
   overflow: hidden;
@@ -899,7 +902,7 @@ textarea {
 
 .filters-header h2 {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -918,15 +921,16 @@ textarea {
   gap: 6px;
   padding: 7px 14px;
   background: var(--accent);
-  border: none;
+  border: 1px solid var(--accent);
   border-radius: var(--hc-radius);
   color: #fff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 800;
   font-family: var(--font-body);
   cursor: pointer;
   transition: opacity var(--transition);
   white-space: nowrap;
+  box-shadow: rgba(249, 115, 22, 0.3) 0px 1px 3px 0px;
 }
 
 .download-csv-btn:hover {
@@ -991,7 +995,7 @@ textarea {
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 800;
   color: var(--text-muted);
   margin-bottom: 5px;
   text-transform: uppercase;
@@ -1313,6 +1317,7 @@ textarea {
   background: var(--bg-card);
   border: 1px solid var(--hc-border);
   border-radius: var(--hc-radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -1323,7 +1328,8 @@ textarea {
 }
 
 .stat-card:hover {
-  border-color: rgba(15, 23, 42, 0.12);
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-md);
 }
 
 .stat-card.primary {
@@ -1363,7 +1369,7 @@ textarea {
 
 .stat-label {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -1538,10 +1544,10 @@ textarea {
 .power-badge {
   font-size: 9px;
   padding: 2px 7px;
-  border-radius: 4px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
+  border-radius: 99px;
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--accent);
+  font-weight: 800;
   letter-spacing: 0.3px;
 }
 
@@ -1914,9 +1920,10 @@ textarea {
 }
 
 .performance-chart-box {
-  background: var(--bg-surface);
+  background: var(--bg-card);
   border: 1px solid var(--hc-border);
   border-radius: var(--hc-radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -2148,9 +2155,10 @@ svg:focus {
 
 /* ── Chart Info Panel ──────────────────────────────────── */
 .chart-info-panel {
-  background: var(--bg-surface);
+  background: var(--bg-card);
   border: 1px solid var(--hc-border);
   border-radius: var(--hc-radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -2634,7 +2642,7 @@ svg:focus {
 
 .section-header h2 {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .sessions-list {
@@ -2650,8 +2658,9 @@ svg:focus {
 /* ── Session Card ──────────────────────────────────────── */
 .session-card {
   background: var(--bg-card);
-  border: 1px solid transparent;
+  border: 1px solid var(--hc-border);
   border-radius: var(--hc-radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 13px;
   cursor: pointer;
   transition: all var(--transition);
@@ -2660,22 +2669,14 @@ svg:focus {
 }
 
 .session-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: var(--hc-radius-lg);
-  border: 1px solid var(--hc-border-subtle);
-  pointer-events: none;
-  transition: border-color var(--transition);
+  content: none;
 }
 
 .session-card:hover {
   background: var(--bg-surface);
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
-}
-
-.session-card:hover::before {
-  border-color: rgba(15, 23, 42, 0.08);
 }
 
 .session-card.selected {
@@ -2713,18 +2714,18 @@ svg:focus {
 
 .status-pill {
   font-size: 8px;
-  font-weight: 600;
-  padding: 2px 5px;
-  border-radius: 3px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 99px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  background: rgba(15, 23, 42, 0.05);
+  background: rgba(148, 163, 184, 0.12);
   color: var(--text-muted);
 }
 
 .status-pill.completed {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  background: rgba(22, 162, 73, 0.1);
+  color: var(--green);
 }
 
 .session-time {
@@ -2833,16 +2834,16 @@ svg:focus {
 .connector-badge,
 .chart-badge {
   font-size: 9px;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(15, 23, 42, 0.04);
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(228, 228, 231, 0.5);
   color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .voltage-badge.v800 {
-  background: rgba(249, 115, 22, 0.08);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--accent);
 }
 
@@ -2985,6 +2986,7 @@ svg:focus {
   background: var(--bg-raised);
   border: 1px solid var(--hc-border);
   border-radius: var(--hc-radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 18px;
   min-height: 560px;
 }
@@ -3000,7 +3002,7 @@ svg:focus {
 
 .chart-header h2 {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
 }
 .chart-subtitle {
   font-size: 10px;
@@ -3056,6 +3058,7 @@ svg:focus {
   align-items: center;
   gap: 4px;
   font-size: 9px;
+  font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
