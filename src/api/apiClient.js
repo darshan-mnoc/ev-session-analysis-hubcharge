@@ -206,6 +206,9 @@ export const endpoints = {
 // Page size matches the working portal call (?limit=500&page=N).
 const PAGE_SIZE = 500;
 const TIMEZONE = "America/Los_Angeles";
+// How many pages to fetch simultaneously. 4 keeps server load reasonable
+// while cutting wall-time by ~4×.
+const CONCURRENCY = 4;
 
 export const sessionApi = {
   /**
@@ -243,15 +246,16 @@ function parseResponseData(response) {
 }
 
 /**
- * Fetch one page. Returns { ok, rows }.
+ * Fetch one page. noCache=false so the browser can HTTP-cache page responses
+ * within the same session — the data doesn't change mid-load.
  */
 async function fetchPage(endpoint, baseParams, page) {
   try {
-    const response = await apiClient.get(endpoint, {
-      ...baseParams,
-      limit: PAGE_SIZE,
-      page,
-    });
+    const response = await apiClient.get(
+      endpoint,
+      { ...baseParams, limit: PAGE_SIZE, page },
+      { noCache: false },   // allow browser to cache; removes _t timestamp
+    );
     return { ok: true, rows: parseResponseData(response) };
   } catch {
     return { ok: false, rows: [] };
@@ -259,11 +263,13 @@ async function fetchPage(endpoint, baseParams, page) {
 }
 
 /**
- * Fetch every page with `?limit=500&page=N` (the scheme the portal uses).
+ * Fetch all pages concurrently in sliding batches of CONCURRENCY.
  *
- * - Streams each page to `onPage(rows, total)` so callers render immediately.
- * - Stops when a page returns fewer than PAGE_SIZE rows (the last page).
- * - `onProgress` gets { count, fraction } to drive a progress bar.
+ * Sequential (before):  p1→p2→p3→…p20  =  20 × ~2.5s  ≈ 50s
+ * Concurrent (after):   [p1…p4] [p5…p8] … = 5 rounds × ~2.5s ≈ 12s
+ *
+ * Pages within a batch run in parallel; batches run in sequence so we
+ * stop as soon as we see a partial page (the last one).
  */
 async function fetchAllPages(
   endpoint,
@@ -271,27 +277,35 @@ async function fetchAllPages(
   { onProgress = null, onPage = null } = {},
 ) {
   const all = [];
-  let page = 1;
+  let nextPage = 1;
+  let done = false;
 
-  // Hard cap so a misbehaving endpoint can never loop forever.
-  while (page <= 100) {
-    const { ok, rows } = await fetchPage(endpoint, baseParams, page);
-    if (!ok || rows.length === 0) break;
+  while (!done && nextPage <= 200) {
+    // Build next batch of up to CONCURRENCY page requests.
+    const batch = Array.from({ length: CONCURRENCY }, (_, i) =>
+      fetchPage(endpoint, baseParams, nextPage + i),
+    );
+    nextPage += CONCURRENCY;
 
-    all.push(...rows);
-    if (onPage) onPage(rows, all.length);
-    if (onProgress) {
-      // Last page → 1; otherwise edge toward completion as pages accrue.
-      const fraction = rows.length < PAGE_SIZE ? 1 : Math.min(0.9, page / 6);
-      onProgress({ count: all.length, fraction });
+    // Run batch in parallel, collect results in order.
+    const results = await Promise.all(batch);
+
+    for (const { ok, rows } of results) {
+      if (!ok || rows.length === 0) { done = true; break; }
+
+      all.push(...rows);
+      if (onPage) onPage(rows, all.length);
+
+      if (rows.length < PAGE_SIZE) { done = true; break; }
     }
 
-    if (rows.length < PAGE_SIZE) break; // last page
-    page += 1;
+    if (onProgress) {
+      onProgress({ count: all.length, fraction: done ? 1 : Math.min(0.95, all.length / (all.length + PAGE_SIZE)) });
+    }
   }
 
   if (onProgress) onProgress({ count: all.length, fraction: 1 });
-  console.log(`✓ Fetched ${all.length} records (${page} page[s])`);
+  console.log(`✓ Fetched ${all.length} records in ${Math.ceil((nextPage - 1) / CONCURRENCY)} concurrent batches`);
   return all;
 }
 

@@ -107,14 +107,8 @@ export const AuthProvider = ({ children }) => {
       console.log("[Auth] State changed:", _event);
       setSession(newSession);
       setAuthError(null);
-
-      // When a magic-link sign-in completes, verify API access
-      if (
-        (_event === "SIGNED_IN" || _event === "TOKEN_REFRESHED") &&
-        newSession?.access_token
-      ) {
-        verifyApiAccess(newSession.access_token);
-      }
+      // verifyApiAccess is called explicitly on login/session restore above;
+      // calling it again here on every state change caused duplicate API calls.
     });
 
     return () => subscription.unsubscribe();
