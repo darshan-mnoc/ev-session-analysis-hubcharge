@@ -1,7 +1,11 @@
 /* Calculator - HubCharge BESS Simulator design language */
 
 .calc-header {
-  padding: 1.5rem 2rem;
+  height: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 2rem;
   border-bottom: 1px solid var(--hc-border);
   background: var(--bg-raised);
   box-shadow: var(--shadow-sm);

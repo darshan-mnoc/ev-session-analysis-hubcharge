@@ -102,9 +102,45 @@ export default function Layout({ children }) {
             </svg>
             Calculator
           </Link>
+          <Link
+            to="/transactions"
+            className={`nav-item ${location.pathname === "/transactions" ? "active" : ""}`}
+            onClick={closeMobileMenu}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+              <line x1="6" y1="15" x2="10" y2="15" />
+              <line x1="14" y1="15" x2="18" y2="15" />
+            </svg>
+            Transactions
+          </Link>
         </nav>
 
         <div className="sidebar-footer">
+          <a
+            href="https://hc-cost-simulator.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="finance-launcher"
+            onClick={closeMobileMenu}
+          >
+            <div className="finance-launcher-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+            <div className="finance-launcher-text">
+              <span className="finance-launcher-label">HubCharge Finance</span>
+              <span className="finance-launcher-sub">Open app ↗</span>
+            </div>
+          </a>
           <button
             className="refresh-btn"
             onClick={() => {

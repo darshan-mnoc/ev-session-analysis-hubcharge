@@ -1,17 +1,4 @@
-/**
- * Pagination Component
- * Handles page navigation for lists
- */
-
 import React from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const Pagination = ({
   currentPage,
@@ -25,73 +12,75 @@ const Pagination = ({
 
   const getPageNumbers = () => {
     return Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-      let pageNum;
-      if (totalPages <= 5) {
-        pageNum = i + 1;
-      } else if (currentPage <= 3) {
-        pageNum = i + 1;
-      } else if (currentPage >= totalPages - 2) {
-        pageNum = totalPages - 4 + i;
-      } else {
-        pageNum = currentPage - 2 + i;
-      }
-      return pageNum;
+      if (totalPages <= 5) return i + 1;
+      if (currentPage <= 3) return i + 1;
+      if (currentPage >= totalPages - 2) return totalPages - 4 + i;
+      return currentPage - 2 + i;
     });
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 px-4 py-3">
-      <Button
-        variant="outline"
-        size="icon"
+    <div className="pagination">
+      <button
+        className="pagination-btn"
         onClick={() => onPageChange(1)}
         disabled={currentPage === 1}
         title="First page"
       >
-        <ChevronsLeft />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="11 17 6 12 11 7" />
+          <polyline points="18 17 13 12 18 7" />
+        </svg>
+      </button>
+
+      <button
+        className="pagination-btn"
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
         title="Previous page"
       >
-        <ChevronLeft />
-      </Button>
-      <div className="flex items-center gap-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+
+      <div className="pagination-numbers">
         {getPageNumbers().map((pageNum) => (
-          <Button
+          <button
             key={pageNum}
-            variant={currentPage === pageNum ? "default" : "ghost"}
-            size="icon"
-            className={cn("size-9", currentPage !== pageNum && "text-muted-foreground")}
+            className={`pagination-number${currentPage === pageNum ? " active" : ""}`}
             onClick={() => onPageChange(pageNum)}
           >
             {pageNum}
-          </Button>
+          </button>
         ))}
       </div>
-      <Button
-        variant="outline"
-        size="icon"
+
+      <button
+        className="pagination-btn"
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
         title="Next page"
       >
-        <ChevronRight />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+
+      <button
+        className="pagination-btn"
         onClick={() => onPageChange(totalPages)}
         disabled={currentPage === totalPages}
         title="Last page"
       >
-        <ChevronsRight />
-      </Button>
-      <span className="ml-auto text-xs text-muted-foreground">
-        {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="13 17 18 12 13 7" />
+          <polyline points="6 17 11 12 6 7" />
+        </svg>
+      </button>
+
+      <span className="pagination-info">
+        {startIndex + 1}–{Math.min(endIndex, totalItems)} of {totalItems}
       </span>
     </div>
   );
