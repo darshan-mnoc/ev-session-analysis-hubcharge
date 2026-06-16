@@ -43,8 +43,12 @@ const LoginForm = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-orange-50/60 to-background px-4">
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="items-center gap-3 text-center">
-          <img src={Logo} alt="HubCharge" className="h-10 w-auto object-contain" />
+        <div className="flex flex-col items-center gap-3 px-6 pt-6 pb-2 text-center">
+          <img
+            src={Logo}
+            alt="HubCharge"
+            className="h-10 w-auto max-w-[200px] object-contain"
+          />
           <div>
             <h1 className="text-xl font-bold tracking-tight">
               HubCharge Dashboard
@@ -55,9 +59,9 @@ const LoginForm = () => {
                 : "Sign in to access your EV analytics"}
             </p>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-4 pb-6">
           {authError && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {authError}
