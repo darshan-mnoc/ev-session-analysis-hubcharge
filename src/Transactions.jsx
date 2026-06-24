@@ -1,6 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./Transactions.css";
-import { apiClient } from "./api/apiClient";
+
+const ID_API_URL =
+  "https://script.google.com/macros/s/AKfycbyHyizEI2ZuZHS8CkUJPtsq8Wzi8FhEW1NmC1dC1Xc38AGZEaGnvfzXFIibKvidVQiF/exec";
+const TX_API_URL =
+  "https://script.google.com/macros/s/AKfycbyI0mky8b2qsTgwyCrkVPMGoUEL5KJ0c4mdONYwRVdqCJ3OyiG0h8xnEyt6Iwc5PaUa/exec";
+const API_KEY = "72125bff3c984275973cbaa487e35f3a";
+
+// TODO: replace with real accounts endpoint when available
+const ACCOUNTS_API_URL = "https://hubcharge.micronocinc.com/management/api/settlement_accounts";
 
 const TRANSACTION_TYPES = [
   { value: "receivable_charges", label: "Receivable Charges" },
@@ -9,68 +17,68 @@ const TRANSACTION_TYPES = [
   { value: "payment_eft", label: "Payment EFT" },
 ];
 
-const TRIGGER_TYPES = [
-  { value: "payment_check", label: "Payment Check" },
-  { value: "payment_eft", label: "Payment EFT" },
-  { value: "settlement_run", label: "Settlement Run" },
-];
-
 const EMPTY_FORM = {
-  transaction_time: "",
-  transaction_type: "",
-  settlement_account_id: "",
   schedule_id: "",
+  settlement_account_id: "",
   amount: "",
   description: "",
-  trigger_type: "",
+  transaction_time: "",
+  transaction_type: "",
 };
 
-// Convert a local date string (YYYY-MM-DD) to Unix timestamp for midnight PT.
 function dateToUnixMidnightPT(dateStr) {
-  // Construct an ISO string that Intl can interpret as midnight in PT.
-  // We rely on the fact that toLocaleString with timeZone gives us the offset,
-  // but the simplest cross-browser approach is to use Date with a UTC offset
-  // adjustment. We use the Intl approach via a dummy parse.
   const [year, month, day] = dateStr.split("-").map(Number);
-  // Build a Date representing midnight local wall-clock in America/Los_Angeles.
-  // We do this by finding what UTC time corresponds to midnight PT on that date.
-  const dtUtc = new Date(Date.UTC(year, month - 1, day, 8, 0, 0)); // 8 AM UTC ≈ midnight PST
-  // Verify by formatting and adjusting for DST.
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Los_Angeles",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
     hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
     hour12: false,
   });
-  // Binary-search approach: start at noon UTC on that date, walk backwards.
-  // Simpler: use the offset trick.
   const probe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
   const parts = formatter.formatToParts(probe);
-  const p = {};
-  parts.forEach(({ type, value }) => { p[type] = value; });
-  // Reconstruct what UTC time corresponds to midnight PT on that calendar day.
-  const probeHour = parseInt(p.hour, 10); // PT hour at noon UTC
-  // At noon UTC, PT is noon UTC minus offset. offset = noon UTC hour in PT wall clock... no.
-  // Actually: if at noon UTC the PT wall clock shows hour H, then
-  // UTC offset = 12 - H (in hours, positive means behind UTC).
-  // Midnight PT (0:00) = UTC (0 + offset) = offset hours UTC.
+  const probeHour = parseInt(parts.find((p) => p.type === "hour").value, 10);
   const offsetHours = 12 - probeHour;
   const midnightPT = new Date(Date.UTC(year, month - 1, day, offsetHours, 0, 0));
   return Math.floor(midnightPT.getTime() / 1000);
 }
 
-// Stub: replace with real Toolbox.generatedId16 endpoint when available.
-async function fetchGeneratedId(prefix) {
-  // TODO: replace with real API call e.g.:
-  // return apiClient.get(`/toolbox/generatedId16/${prefix}`).then(r => r.id);
+function localGeneratedId(prefix) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let id = "";
   for (let i = 0; i < 16; i++) id += chars[Math.floor(Math.random() * chars.length)];
   return `${prefix}_${id}`;
+}
+
+async function fetchGeneratedId(prefix) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(ID_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ apiKey: API_KEY, scope: "generateID", prefix }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const id = data.data ?? data.id ?? data.result ?? null;
+    if (!id) throw new Error("empty response");
+    return { id, local: false };
+  } catch {
+    clearTimeout(timeout);
+    return { id: localGeneratedId(prefix), local: true };
+  }
+}
+
+async function fetchSettlementAccounts(scheduleId) {
+  // TODO: swap for real endpoint. Expected response: [{ settlement_account_id, entity, balance }]
+  const res = await fetch(`${ACCOUNTS_API_URL}?schedule_id=${encodeURIComponent(scheduleId)}`, {
+    headers: { "Cache-Control": "no-cache" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  // Handle both array response and wrapped response
+  return Array.isArray(data) ? data : (data.data ?? data.rows ?? []);
 }
 
 export default function Transactions() {
@@ -78,43 +86,77 @@ export default function Transactions() {
   const [transactionId, setTransactionId] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [idsLoading, setIdsLoading] = useState(true);
+  const [idsLocal, setIdsLocal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [banner, setBanner] = useState(null); // { type: "success"|"error", message: string }
+  const [result, setResult] = useState(null); // { status, statusCode, message }
+
+  // Accounts state
+  const [accounts, setAccounts] = useState([]);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountsError, setAccountsError] = useState(null);
+  const lastFetchedScheduleId = useRef("");
 
   const generateIds = useCallback(async () => {
     setIdsLoading(true);
-    setBanner(null);
+    setResult(null);
     try {
-      const [trId, idKey] = await Promise.all([
+      const [tr, idk] = await Promise.all([
         fetchGeneratedId("tr"),
         fetchGeneratedId("id"),
       ]);
-      setTransactionId(trId);
-      setIdempotencyKey(idKey);
+      setTransactionId(tr.id);
+      setIdempotencyKey(idk.id);
+      setIdsLocal(tr.local || idk.local);
     } catch {
-      setTransactionId("Error generating ID");
-      setIdempotencyKey("Error generating ID");
+      setTransactionId(localGeneratedId("tr"));
+      setIdempotencyKey(localGeneratedId("id"));
+      setIdsLocal(true);
     } finally {
       setIdsLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    generateIds();
-  }, [generateIds]);
+  useEffect(() => { generateIds(); }, [generateIds]);
+
+  const loadAccounts = useCallback(async (scheduleId) => {
+    const sid = scheduleId.trim();
+    if (!sid || sid === lastFetchedScheduleId.current) return;
+    lastFetchedScheduleId.current = sid;
+    setAccountsLoading(true);
+    setAccountsError(null);
+    setAccounts([]);
+    setForm((prev) => ({ ...prev, settlement_account_id: "" }));
+    try {
+      const rows = await fetchSettlementAccounts(sid);
+      setAccounts(rows);
+      if (rows.length === 1) {
+        setForm((prev) => ({ ...prev, settlement_account_id: rows[0].settlement_account_id }));
+      }
+    } catch (err) {
+      setAccountsError(err.message || "Failed to load accounts");
+    } finally {
+      setAccountsLoading(false);
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setBanner(null);
+    setResult(null);
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleScheduleBlur = (e) => {
+    if (e.target.value.trim()) loadAccounts(e.target.value.trim());
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setBanner(null);
+    setResult(null);
     setSubmitting(true);
 
-    const body = {
+    const payload = {
+      apiKey: API_KEY,
+      scope: "appendTransaction",
       transaction_id: transactionId,
       transaction_time: dateToUnixMidnightPT(form.transaction_time),
       transaction_type: form.transaction_type,
@@ -123,19 +165,31 @@ export default function Transactions() {
       amount: parseFloat(form.amount),
       currency: "USD",
       description: form.description,
-      trigger_type: form.trigger_type,
+      trigger_type: "manual_entry",
       trigger_id: null,
       idempotency_key: idempotencyKey,
     };
 
     try {
-      // TODO: replace endpoint with real POST URL when available.
-      const res = await apiClient.post("/transactions", body);
-      setBanner({ type: "success", message: res.message || "Transaction submitted." });
-      setForm(EMPTY_FORM);
-      await generateIds();
+      const res = await fetch(TX_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      setResult({
+        status: data.status,
+        statusCode: data.statusCode,
+        message: data.message,
+      });
+      if (data.status === "success") {
+        setForm(EMPTY_FORM);
+        setAccounts([]);
+        lastFetchedScheduleId.current = "";
+        await generateIds();
+      }
     } catch (err) {
-      setBanner({ type: "error", message: err.message || "Submission failed." });
+      setResult({ status: "error", statusCode: null, message: err.message || "Network error." });
     } finally {
       setSubmitting(false);
     }
@@ -146,96 +200,59 @@ export default function Transactions() {
   return (
     <div className="tx-page">
       <header className="tx-header">
-        <h1 className="tx-title">New Transaction</h1>
-        <p className="tx-subtitle">Append an entry to the clearing ledger</p>
+        <div>
+          <h1 className="tx-title">New Clearing Transaction</h1>
+        </div>
+        <div className="tx-ids-strip">
+          <span className="tx-ids-item">
+            <span className="tx-ids-key">TXN ID</span>
+            <span className={`tx-ids-val${idsLoading ? " tx-ids-val--loading" : ""}`}>
+              {idsLoading ? "generating…" : transactionId}
+            </span>
+          </span>
+          <span className="tx-ids-dot">·</span>
+          <span className="tx-ids-item">
+            <span className="tx-ids-key">IDEMPOTENCY</span>
+            <span className={`tx-ids-val${idsLoading ? " tx-ids-val--loading" : ""}`}>
+              {idsLoading ? "generating…" : idempotencyKey}
+            </span>
+          </span>
+          {!idsLoading && idsLocal && (
+            <span className="tx-ids-local-badge" title="ID service unavailable — using locally generated IDs">
+              local
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="tx-body">
-      {banner && (
-        <div className={`tx-banner tx-banner--${banner.type}`}>
-          <span className="tx-banner-icon">
-            {banner.type === "success" ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
+
+        {result && (
+          <div className={`tx-result tx-result--${result.status === "success" ? "success" : "error"}`}>
+            <div className="tx-result-left">
+              <span className="tx-result-icon">
+                {result.status === "success" ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                )}
+              </span>
+              <span className="tx-result-message">{result.message}</span>
+            </div>
+            {result.statusCode && (
+              <span className="tx-result-code">{result.statusCode}</span>
             )}
-          </span>
-          {banner.message}
-        </div>
-      )}
+          </div>
+        )}
 
-      <form className="tx-form" onSubmit={handleSubmit} noValidate>
-        {/* System-generated row */}
-        <div className="tx-section-label">System Generated</div>
-        <div className="tx-row tx-row--2col">
-          <div className="tx-field">
-            <label className="tx-label">Transaction ID</label>
-            <div className={`tx-readonly-input ${idsLoading ? "tx-readonly-input--loading" : ""}`}>
-              {idsLoading ? <span className="tx-generating">Generating…</span> : transactionId}
-            </div>
-          </div>
-          <div className="tx-field">
-            <label className="tx-label">Idempotency Key</label>
-            <div className={`tx-readonly-input ${idsLoading ? "tx-readonly-input--loading" : ""}`}>
-              {idsLoading ? <span className="tx-generating">Generating…</span> : idempotencyKey}
-            </div>
-          </div>
-        </div>
+        <form className="tx-form" onSubmit={handleSubmit} noValidate>
 
-        {/* User input fields */}
-        <div className="tx-section-label">Transaction Details</div>
-        <div className="tx-row tx-row--2col">
-          <div className="tx-field">
-            <label className="tx-label" htmlFor="transaction_time">Transaction Date</label>
-            <input
-              id="transaction_time"
-              name="transaction_time"
-              type="date"
-              className="tx-input"
-              value={form.transaction_time}
-              onChange={handleChange}
-              required
-            />
-            <span className="tx-hint">Converted to midnight PT on submit</span>
-          </div>
-          <div className="tx-field">
-            <label className="tx-label" htmlFor="transaction_type">Transaction Type</label>
-            <select
-              id="transaction_type"
-              name="transaction_type"
-              className="tx-select"
-              value={form.transaction_type}
-              onChange={handleChange}
-              required
-            >
-              <option value="" disabled>Select type…</option>
-              {TRANSACTION_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="tx-row tx-row--2col">
-          <div className="tx-field">
-            <label className="tx-label" htmlFor="settlement_account_id">Settlement Account ID</label>
-            <input
-              id="settlement_account_id"
-              name="settlement_account_id"
-              type="text"
-              className="tx-input"
-              placeholder="e.g. B3000200000"
-              value={form.settlement_account_id}
-              onChange={handleChange}
-              required
-            />
-          </div>
           <div className="tx-field">
             <label className="tx-label" htmlFor="schedule_id">Schedule ID</label>
             <input
@@ -246,57 +263,70 @@ export default function Transactions() {
               placeholder="e.g. sch_kzIlx7QPRujhrbBv"
               value={form.schedule_id}
               onChange={handleChange}
+              onBlur={handleScheduleBlur}
               required
             />
           </div>
-        </div>
 
-        <div className="tx-row tx-row--3col">
           <div className="tx-field">
-            <label className="tx-label" htmlFor="amount">Amount</label>
-            <input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              className="tx-input"
-              placeholder="0.00"
-              value={form.amount}
-              onChange={handleChange}
-              required
-            />
+            <label className="tx-label" htmlFor="settlement_account_id">
+              Settlement Account
+              {accountsLoading && <span className="tx-accounts-loading">Fetching accounts…</span>}
+            </label>
+            {accounts.length > 0 ? (
+              <select
+                id="settlement_account_id"
+                name="settlement_account_id"
+                className="tx-select"
+                value={form.settlement_account_id}
+                onChange={handleChange}
+                required
+              >
+                <option value="" disabled>Select account…</option>
+                {accounts.map((a) => (
+                  <option key={a.settlement_account_id} value={a.settlement_account_id}>
+                    {a.settlement_account_id} · {a.entity} · ${Number(a.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                id="settlement_account_id"
+                name="settlement_account_id"
+                type="text"
+                className={`tx-input${accountsLoading ? " tx-input--loading" : ""}`}
+                placeholder={accountsLoading ? "Loading accounts…" : accountsError ? `Error: ${accountsError}` : "Enter Schedule ID above to load accounts"}
+                value={form.settlement_account_id}
+                onChange={handleChange}
+                disabled={accountsLoading}
+                required
+              />
+            )}
+            {accountsError && (
+              <span className="tx-hint tx-hint--error">{accountsError}</span>
+            )}
           </div>
-          <div className="tx-field">
-            <label className="tx-label">Currency</label>
-            <div className="tx-readonly-input tx-readonly-input--fixed">USD</div>
-          </div>
-          <div className="tx-field">
-            <label className="tx-label">Trigger ID</label>
-            <div className="tx-readonly-input tx-readonly-input--fixed">null</div>
-          </div>
-        </div>
 
-        <div className="tx-row tx-row--2col">
           <div className="tx-field">
-            <label className="tx-label" htmlFor="trigger_type">Trigger Type</label>
-            <select
-              id="trigger_type"
-              name="trigger_type"
-              className="tx-select"
-              value={form.trigger_type}
-              onChange={handleChange}
-              required
-            >
-              <option value="" disabled>Select trigger…</option>
-              {TRIGGER_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+            <label className="tx-label" htmlFor="amount">Amount (USD)</label>
+            <div className="tx-amount-wrap">
+              <span className="tx-amount-prefix">$</span>
+              <input
+                id="amount"
+                name="amount"
+                type="number"
+                step="0.01"
+                className="tx-input tx-input--amount"
+                placeholder="0.00"
+                value={form.amount}
+                onChange={handleChange}
+                required
+              />
+              <span className="tx-amount-suffix">USD</span>
+            </div>
           </div>
-        </div>
 
-        <div className="tx-row">
-          <div className="tx-field tx-field--full">
+          <div className="tx-field">
             <label className="tx-label" htmlFor="description">
               Description
               <span className={`tx-char-count ${charCount > 240 ? "tx-char-count--warn" : ""}`}>
@@ -315,33 +345,65 @@ export default function Transactions() {
               required
             />
           </div>
-        </div>
 
-        <div className="tx-actions">
-          <button
-            type="button"
-            className="tx-btn tx-btn--ghost"
-            onClick={() => { setForm(EMPTY_FORM); setBanner(null); }}
-            disabled={submitting}
-          >
-            Clear
-          </button>
-          <button
-            type="submit"
-            className="tx-btn tx-btn--primary"
-            disabled={submitting || idsLoading}
-          >
-            {submitting ? (
-              <>
-                <span className="tx-spinner" />
-                Submitting…
-              </>
-            ) : (
-              "Submit Transaction"
-            )}
-          </button>
-        </div>
-      </form>
+          <div className="tx-field">
+            <label className="tx-label" htmlFor="transaction_time">Transaction Date</label>
+            <input
+              id="transaction_time"
+              name="transaction_time"
+              type="date"
+              className="tx-input"
+              value={form.transaction_time}
+              onChange={handleChange}
+              required
+            />
+            <span className="tx-hint">Converted to midnight PT on submit</span>
+          </div>
+
+          <div className="tx-field">
+            <label className="tx-label" htmlFor="transaction_type">Transaction Type</label>
+            <select
+              id="transaction_type"
+              name="transaction_type"
+              className="tx-select"
+              value={form.transaction_type}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>Select type…</option>
+              {TRANSACTION_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="tx-actions">
+            <button
+              type="button"
+              className="tx-btn tx-btn--ghost"
+              onClick={() => {
+                setForm(EMPTY_FORM);
+                setResult(null);
+                setAccounts([]);
+                lastFetchedScheduleId.current = "";
+              }}
+              disabled={submitting}
+            >
+              Clear
+            </button>
+            <button
+              type="submit"
+              className="tx-btn tx-btn--primary"
+              disabled={submitting || idsLoading}
+            >
+              {submitting ? (
+                <><span className="tx-spinner" />Submitting…</>
+              ) : (
+                "Submit Transaction"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
